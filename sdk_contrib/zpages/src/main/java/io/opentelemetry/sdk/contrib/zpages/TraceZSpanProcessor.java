@@ -22,6 +22,7 @@ import io.opentelemetry.sdk.trace.ReadableSpan;
 import io.opentelemetry.sdk.trace.SpanProcessor;
 import io.opentelemetry.trace.SpanId;
 import javax.annotation.concurrent.ThreadSafe;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,7 +32,7 @@ import java.util.Map;
  * <p>Configuration options for {@link io.opentelemetry.sdk.contrib.zpages.TraceZSpanProcessor} can be read from system properties,
  * environment variables, or {@link java.util.Properties} objects.
  *
- * <p>For system properties and {@link java.util.Properties} objects, {@link io.opentelemetry.sdk.contrib.zpage.tracez.TraceZSpanProcessor}
+ * <p>For system properties and {@link java.util.Properties} objects, {@link io.opentelemetry.sdk.contrib.zpages.TraceZSpanProcessor}
  * will look for the following names:
  *
  * <ul>
@@ -66,7 +67,9 @@ public final class TraceZSpanProcessor implements SpanProcessor {
     if (sampled && !span.getSpanContext().getTraceFlags().isSampled()) {
       return;
     }
-    runningSpanCache.put(span.getSpanContext().getSpanId(), span);
+    synchronized (this) {
+      runningSpanCache.put(span.getSpanContext().getSpanId(), span);
+    }
   }
 
   @Override
@@ -79,9 +82,11 @@ public final class TraceZSpanProcessor implements SpanProcessor {
     if (sampled && !span.getSpanContext().getTraceFlags().isSampled()) {
       return;
     }
-    SpanId id = span.getSpanContext().getSpanId();
-    runningSpanCache.remove(id);
-    completedSpanCache.put(id, span);
+    synchronized (this) {
+      SpanId id = span.getSpanContext().getSpanId();
+      runningSpanCache.remove(id);
+      completedSpanCache.put(id, span);
+    }
   }
 
   @Override
@@ -97,6 +102,18 @@ public final class TraceZSpanProcessor implements SpanProcessor {
   @Override
   public void forceFlush() {
     // Do nothing.
+  }
+
+  public Collection<ReadableSpan> getRunningSpans() {
+    synchronized (this) {
+      return runningSpanCache.values();
+    }
+  }
+
+  public Collection<ReadableSpan> getCompletedSpans() {
+    synchronized (this) {
+      return completedSpanCache.values();
+    }
   }
 
   /**
