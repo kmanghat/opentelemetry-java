@@ -12,5 +12,7 @@ dependencies {
     api project(':opentelemetry-api'),
             project(':opentelemetry-sdk')
 
+    implementation libraries.guava
+
     signature "org.codehaus.mojo.signature:java17:1.0@signature"
 }
