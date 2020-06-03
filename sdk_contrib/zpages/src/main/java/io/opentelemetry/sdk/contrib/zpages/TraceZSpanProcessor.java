@@ -21,25 +21,26 @@ import io.opentelemetry.sdk.common.export.ConfigBuilder;
 import io.opentelemetry.sdk.trace.ReadableSpan;
 import io.opentelemetry.sdk.trace.SpanProcessor;
 import io.opentelemetry.trace.SpanId;
-import javax.annotation.concurrent.ThreadSafe;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * A {@link SpanProcessor} implementation for the traceZ zPage.
  *
- * <p>Configuration options for {@link io.opentelemetry.sdk.contrib.zpages.TraceZSpanProcessor} can be read from system properties,
- * environment variables, or {@link java.util.Properties} objects.
+ * <p>Configuration options for {@link io.opentelemetry.sdk.contrib.zpages.TraceZSpanProcessor} can
+ * be read from system properties, environment variables, or {@link java.util.Properties} objects.
  *
- * <p>For system properties and {@link java.util.Properties} objects, {@link io.opentelemetry.sdk.contrib.zpages.TraceZSpanProcessor}
- * will look for the following names:
+ * <p>For system properties and {@link java.util.Properties} objects, {@link
+ * io.opentelemetry.sdk.contrib.zpages.TraceZSpanProcessor} will look for the following names:
  *
  * <ul>
  *   <li>{@code otel.ssp.export.sampled}: sets whether only sampled spans should be exported.
  * </ul>
  *
- * <p>For environment variables, {@link io.opentelemetry.sdk.contrib.zpages.TraceZSpanProcessor} will look for the following names:
+ * <p>For environment variables, {@link io.opentelemetry.sdk.contrib.zpages.TraceZSpanProcessor}
+ * will look for the following names:
  *
  * <ul>
  *   <li>{@code OTEL_SSP_EXPORT_SAMPLED}: sets whether only sampled spans should be exported.
@@ -104,12 +105,24 @@ public final class TraceZSpanProcessor implements SpanProcessor {
     // Do nothing.
   }
 
+  /**
+   * Returns a Collection of all running spans for {@link
+   * io.opentelemetry.sdk.contrib.zpages.TraceZSpanProcessor}.
+   *
+   * @return a Collection of {@link io.opentelemetry.sdk.trace.ReadableSpan}.\
+   */
   public Collection<ReadableSpan> getRunningSpans() {
     synchronized (this) {
       return runningSpanCache.values();
     }
   }
 
+  /**
+   * Returns a Collection of all completed spans for {@link
+   * io.opentelemetry.sdk.contrib.zpages.TraceZSpanProcessor}.
+   *
+   * @return a Collection of {@link io.opentelemetry.sdk.trace.ReadableSpan}.\
+   */
   public Collection<ReadableSpan> getCompletedSpans() {
     synchronized (this) {
       return completedSpanCache.values();
@@ -162,7 +175,7 @@ public final class TraceZSpanProcessor implements SpanProcessor {
      *
      * <p>Default value is {@code true}.
      *
-     * @see io.opentelemetry.sdk.contrib.zpages.TraceZSpanProcessor.Builder#DEFAULT_EXPORT_ONLY_SAMPLED
+     * @see Builder#DEFAULT_EXPORT_ONLY_SAMPLED
      * @param sampled report only sampled spans.
      * @return this.
      */

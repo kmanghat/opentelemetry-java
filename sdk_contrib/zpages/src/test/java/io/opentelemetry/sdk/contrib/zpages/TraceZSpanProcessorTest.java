@@ -23,8 +23,8 @@ import io.opentelemetry.sdk.trace.ReadableSpan;
 import io.opentelemetry.trace.SpanContext;
 import io.opentelemetry.trace.SpanId;
 import io.opentelemetry.trace.TraceFlags;
-import io.opentelemetry.trace.TraceState;
 import io.opentelemetry.trace.TraceId;
+import io.opentelemetry.trace.TraceState;
 import java.util.Collection;
 import java.util.Properties;
 import org.junit.Before;
@@ -38,7 +38,6 @@ import org.mockito.MockitoAnnotations;
 @RunWith(JUnit4.class)
 public final class TraceZSpanProcessorTest {
   @Mock private ReadableSpan readableSpan;
-  private TraceZSpanProcessor traceZSpanProcessor;
   private static final SpanContext SAMPLED_SPAN_CONTEXT =
       SpanContext.create(
           TraceId.getInvalid(),
@@ -47,9 +46,10 @@ public final class TraceZSpanProcessorTest {
           TraceState.builder().build());
   private static final SpanContext NOT_SAMPLED_SPAN_CONTEXT = SpanContext.getInvalid();
 
-  private void assertSpanCacheSizes(int runningSpanCacheSize, int completedSpanCacheSize) {
-    Collection<ReadableSpan> runningSpans = traceZSpanProcessor.getRunningSpans();
-    Collection<ReadableSpan> completedSpans = traceZSpanProcessor.getCompletedSpans();
+  private static void assertSpanCacheSizes(
+      TraceZSpanProcessor spanProcessor, int runningSpanCacheSize, int completedSpanCacheSize) {
+    Collection<ReadableSpan> runningSpans = spanProcessor.getRunningSpans();
+    Collection<ReadableSpan> completedSpans = spanProcessor.getCompletedSpans();
     assertThat(runningSpans.size()).isEqualTo(runningSpanCacheSize);
     assertThat(completedSpans.size()).isEqualTo(completedSpanCacheSize);
   }
@@ -57,23 +57,24 @@ public final class TraceZSpanProcessorTest {
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    traceZSpanProcessor = TraceZSpanProcessor.newBuilder().build();
   }
 
   @Test
   public void onStart_onEnd_SampledSpan() {
+    TraceZSpanProcessor spanProcessor = TraceZSpanProcessor.newBuilder().build();
     when(readableSpan.getSpanContext()).thenReturn(SAMPLED_SPAN_CONTEXT);
-    traceZSpanProcessor.onStart(readableSpan);
-    assertSpanCacheSizes(1, 0);
-    traceZSpanProcessor.onEnd(readableSpan);
-    assertSpanCacheSizes(0, 1);
+    spanProcessor.onStart(readableSpan);
+    assertSpanCacheSizes(spanProcessor, 1, 0);
+    spanProcessor.onEnd(readableSpan);
+    assertSpanCacheSizes(spanProcessor, 0, 1);
   }
 
   @Test
   public void onStart_NotSampledSpan() {
+    TraceZSpanProcessor spanProcessor = TraceZSpanProcessor.newBuilder().build();
     when(readableSpan.getSpanContext()).thenReturn(NOT_SAMPLED_SPAN_CONTEXT);
-    traceZSpanProcessor.onStart(readableSpan);
-    assertSpanCacheSizes(0, 0);
+    spanProcessor.onStart(readableSpan);
+    assertSpanCacheSizes(spanProcessor, 0, 0);
   }
 
   @Test
@@ -84,7 +85,7 @@ public final class TraceZSpanProcessorTest {
 
     when(readableSpan.getSpanContext()).thenReturn(NOT_SAMPLED_SPAN_CONTEXT);
     spanProcessor.onStart(readableSpan);
-    assertSpanCacheSizes(0, 0);
+    assertSpanCacheSizes(spanProcessor, 0, 0);
   }
 
   @Test
@@ -96,7 +97,7 @@ public final class TraceZSpanProcessorTest {
 
     when(readableSpan.getSpanContext()).thenReturn(NOT_SAMPLED_SPAN_CONTEXT);
     spanProcessor.onStart(readableSpan);
-    assertSpanCacheSizes(0, 0);
+    assertSpanCacheSizes(spanProcessor, 0, 0);
   }
 
   @Test
@@ -107,9 +108,9 @@ public final class TraceZSpanProcessorTest {
         TraceZSpanProcessor.newBuilder().readProperties(properties).build();
 
     when(readableSpan.getSpanContext()).thenReturn(NOT_SAMPLED_SPAN_CONTEXT);
-    traceZSpanProcessor.onStart(readableSpan);
-    assertSpanCacheSizes(1, 0);
-    traceZSpanProcessor.onEnd(readableSpan);
-    assertSpanCacheSizes(0, 1);
+    spanProcessor.onStart(readableSpan);
+    assertSpanCacheSizes(spanProcessor, 1, 0);
+    spanProcessor.onEnd(readableSpan);
+    assertSpanCacheSizes(spanProcessor, 0, 1);
   }
 }
