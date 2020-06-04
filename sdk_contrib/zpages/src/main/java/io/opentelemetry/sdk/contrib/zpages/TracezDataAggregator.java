@@ -25,41 +25,27 @@ import java.util.List;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
- * A {@link SpanProcessor} implementation for the traceZ zPage.
+ * A data aggregator for the traceZ zPage.
  *
- * <p>Configuration options for {@link io.opentelemetry.sdk.contrib.zpages.TraceZSpanProcessor} can
- * be read from system properties, environment variables, or {@link java.util.Properties} objects.
- *
- * <p>For system properties and {@link java.util.Properties} objects, {@link
- * io.opentelemetry.sdk.contrib.zpages.TraceZSpanProcessor} will look for the following names:
- *
- * <ul>
- *   <li>{@code otel.ssp.export.sampled}: sets whether only sampled spans should be exported.
- * </ul>
- *
- * <p>For environment variables, {@link io.opentelemetry.sdk.contrib.zpages.TraceZSpanProcessor}
- * will look for the following names:
- *
- * <ul>
- *   <li>{@code OTEL_SSP_EXPORT_SAMPLED}: sets whether only sampled spans should be exported.
- * </ul>
+ * <p>The traceZ data aggregator complies information about the running spans, span latencies, and
+ * error spans for the frontend of the zPage.
  */
 @ThreadSafe
-public final class TraceZDataAggregator {
-  private final TraceZSpanProcessor spanProcessor;
+public final class TracezDataAggregator {
+  private final TracezSpanProcessor spanProcessor;
 
   /**
-   * Constructor for {@link io.opentelemetry.sdk.contrib.zpages.TraceZDataAggregator}.
+   * Constructor for {@link io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator}.
    *
    * @param spanProcessor collects span data.
    */
-  public TraceZDataAggregator(TraceZSpanProcessor spanProcessor) {
+  public TracezDataAggregator(TracezSpanProcessor spanProcessor) {
     this.spanProcessor = spanProcessor;
   }
 
   /**
-   * Returns a Collection of all running spans for {@link
-   * io.opentelemetry.sdk.contrib.zpages.TraceZDataAggregator}.
+   * Returns a List of all running spans for {@link
+   * io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator}.
    *
    * @param spanName name to filter returned spans.
    * @return a List of {@link io.opentelemetry.sdk.trace.data.SpanData}.\
