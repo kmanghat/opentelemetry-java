@@ -24,68 +24,70 @@ import java.io.PrintWriter;
 import java.util.Map;
 
 final class TracezZPageHandler extends ZPageHandler {
-    private static final String TRACEZ_URL = "/tracez";
+  private static final String TRACEZ_URL = "/tracez";
 
-    private TracezZPageHandler(/* TODO: add in parameter */) {
-        
-    }
+  private TracezZPageHandler() {}
 
-    /**
-     * Constructs a new {@code TracezZPageHandler}.
-     * 
-     * @return a new {@code TracezZPageHandler}.
-     */
-    static TracezZPageHandler create(/* TODO: add in parameter */) {
-        return new TracezZPageHandler();
-    }
+  /**
+   * Constructs a new {@code TracezZPageHandler}.
+   *
+   * @return a new {@code TracezZPageHandler}.
+   */
+  static TracezZPageHandler create() {
+    return new TracezZPageHandler();
+  }
 
-    @Override
-    public String getUrlPath() {
-        return TRACEZ_URL;
-    }
+  @Override
+  public String getUrlPath() {
+    return TRACEZ_URL;
+  }
 
-    /**
-     * Emits CSS Styles to the {@link PrinterWriter} {@code out}. Content emited by this function
-     * should be enclosed by <head></head> tag.
-     * 
-     * @param out The {@link PrinterWriter} {@code out}.
-     */
-    private static void emitHtmlStyle(PrintWriter out) {
-        out.write("<style>");
-        out.write(ZPageStyle.style);
-        out.write("</style");
-    }
+  /**
+   * Emits CSS Styles to the {@link PrintWriter} {@code out}. Content emited by this function should
+   * be enclosed by <head></head> tag.
+   *
+   * @param out The {@link PrintWriter} {@code out}.
+   */
+  private static void emitHtmlStyle(PrintWriter out) {
+    out.write("<style>");
+    out.write(ZPageStyle.style);
+    out.write("</style");
+  }
 
-    /**
-     * Emits HTML body content to the {@link PrinterWriter} {@code out}. Content emited by this
-     * function should be enclosed by <body></body> tag.
-     * 
-     * @param out The {@link PrinterWriter} {@code out}.
-     */
-    private static void emitHtmlBody(PrinterWriter out) {}
+  /**
+   * Emits HTML body content to the {@link PrintWriter} {@code out}. Content emited by this function
+   * should be enclosed by <body></body> tag.
+   *
+   * @param out The {@link PrintWriter} {@code out}.
+   */
+  private static void emitHtmlBody(PrintWriter out) {
+    out.write("body");
+  }
 
-    @Override
-    public void emitHtml(Map<String, String> queryMap, OutputStream outputStream) {
-        // PrinterWriter for emiting HTML contents
-        PrinterWriter out = 
-            new PrinterWriter(new BufferedWriter(new OutputStreamWriter(outputStream, Charsets.UTF_8)));
-        out.write("<!DOCTYPE html>");
-        out.write("<html lang=\"en\">");
-        out.write("<head>");
-        out.write("<meta charset=\"UTF-8\">");
-        out.write("<link rel=\"shortcut icon\" href=\"https://opentelemetry.io/favicon.png\""
+  @Override
+  public void emitHtml(Map<String, String> queryMap, OutputStream outputStream) {
+    // PrintWriter for emiting HTML contents
+    PrintWriter out =
+        new PrintWriter(new BufferedWriter(new OutputStreamWriter(outputStream, Charsets.UTF_8)));
+    out.write("<!DOCTYPE html>");
+    out.write("<html lang=\"en\">");
+    out.write("<head>");
+    out.write("<meta charset=\"UTF-8\">");
+    out.write(
+        "<link rel=\"shortcut icon\" href=\"https://opentelemetry.io/favicon.png\""
             + "type=\"image/png\">");
-        out.write("<link href=\"https://fonts.googleapis.com/css?family=Open+Sans:300\""
+    out.write(
+        "<link href=\"https://fonts.googleapis.com/css?family=Open+Sans:300\""
             + "rel=\"stylesheet\">");
-        out.write("<link href=\"https://fonts.googleapis.com/css?family=Roboto\""
-            + "rel=\"stylesheet\">");
-        out.write("<title>TraceZ</title>");
-        emitHtmlStyle(out);
-        out.write("</head>");
-        out.write("<body>");
-        emitHtmlBody(out);
-        out.write("</body>");
-        out.write("</html>");
-        out.close();
-    }
+    out.write(
+        "<link href=\"https://fonts.googleapis.com/css?family=Roboto\"" + "rel=\"stylesheet\">");
+    out.write("<title>TraceZ</title>");
+    emitHtmlStyle(out);
+    out.write("</head>");
+    out.write("<body>");
+    emitHtmlBody(out);
+    out.write("</body>");
+    out.write("</html>");
+    out.close();
+  }
 }

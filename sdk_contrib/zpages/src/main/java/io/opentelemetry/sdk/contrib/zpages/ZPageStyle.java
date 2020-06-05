@@ -16,9 +16,10 @@
 
 package io.opentelemetry.sdk.contrib.zpages;
 
-/** This class contains he unified CSS styles for all zPages */
+/** This class contains the unified CSS styles for all zPages. */
 final class ZPageStyle {
-    private ZPageStyle() {}
+  private ZPageStyle() {}
 
-    static String style = ""; //TODO: add in CSS style here
+  /** Style here will be applied to the generated HTML pages for all zPages. */
+  static String style = "";
 }

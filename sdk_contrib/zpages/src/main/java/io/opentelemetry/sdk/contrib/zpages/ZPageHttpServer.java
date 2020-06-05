@@ -16,6 +16,4 @@
 
 package io.opentelemetry.sdk.contrib.zpages;
 
-public final class ZPageHttpServer {
-    
-}
+public final class ZPageHttpServer {}

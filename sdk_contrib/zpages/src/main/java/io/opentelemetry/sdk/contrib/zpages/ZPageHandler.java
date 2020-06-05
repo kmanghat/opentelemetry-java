@@ -20,26 +20,26 @@ import java.io.OutputStream;
 import java.util.Map;
 
 /**
- * The main interface for all zPages. All zPages should implement this interface to allow
- * the HTTP server implementation to support these pages.
+ * The main interface for all zPages. All zPages should implement this interface to allow the HTTP
+ * server implementation to support these pages.
  */
 public abstract class ZPageHandler {
 
-    /**
-     * Returns the URL path that should be used to register this zPage to the HTTP server.
-     * 
-     * @return the URL path that should be used to register this zPage to the HTTP server.
-     */
-    public abstract String getUrlPath();
-    
-    /**
-     * Emits the generated HTML page to the {@code outputStream}.
-     * 
-     * @param queryMap the map of the URL query parameters.
-     * @param outputStream the output for the generated HTML page.
-     */
-    public abstract void emitHtml(Map<String, String> queryMap, OutputStream outputStream);
+  /**
+   * Returns the URL path that should be used to register this zPage to the HTTP server.
+   *
+   * @return the URL path that should be used to register this zPage to the HTTP server.
+   */
+  public abstract String getUrlPath();
 
-    /** Package protected constructor to disallow users to extend this class */
-    ZPageHandler() {}
+  /**
+   * Emits the generated HTML page to the {@code outputStream}.
+   *
+   * @param queryMap the map of the URL query parameters.
+   * @param outputStream the output for the generated HTML page.
+   */
+  public abstract void emitHtml(Map<String, String> queryMap, OutputStream outputStream);
+
+  /** Package protected constructor to disallow users to extend this class. */
+  ZPageHandler() {}
 }
