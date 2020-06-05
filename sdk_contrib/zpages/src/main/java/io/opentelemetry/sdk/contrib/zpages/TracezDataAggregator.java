@@ -17,11 +17,12 @@
 package io.opentelemetry.sdk.contrib.zpages;
 
 import io.opentelemetry.sdk.trace.ReadableSpan;
-import io.opentelemetry.sdk.trace.SpanProcessor;
 import io.opentelemetry.sdk.trace.data.SpanData;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
@@ -44,7 +45,23 @@ public final class TracezDataAggregator {
   }
 
   /**
-   * Returns a List of all running spans for {@link
+   * Returns a Map of the running span counts for {@link
+   * io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator}.
+   *
+   * @return a Map of span counts for each span name.\
+   */
+  public Map<String, Integer> getRunningSpanCounts() {
+    Collection<ReadableSpan> allRunningSpans = spanProcessor.getRunningSpans();
+    Map<String, Integer> numSpansPerName = new HashMap<>();
+    for (ReadableSpan span : allRunningSpans) {
+      Integer prevValue = numSpansPerName.get(span.getName());
+      numSpansPerName.put(span.getName(), prevValue != null ? prevValue + 1 : 1);
+    }
+    return numSpansPerName;
+  }
+
+  /**
+   * Returns a List of all running spans with a given span name for {@link
    * io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator}.
    *
    * @param spanName name to filter returned spans.
