@@ -51,6 +51,15 @@ public final class TracezDataAggregatorTest {
   }
 
   @Test
+  public void getRunningSpanCounts_noSpans() {
+    /* getRunningSpanCounts should return a an empty map */
+    Map<String, Integer> counts = dataAggregator.getRunningSpanCounts();
+    assertThat(counts.size()).isEqualTo(0);
+    assertThat(counts.get(SPAN_NAME_ONE)).isNull();
+    assertThat(counts.get(SPAN_NAME_TWO)).isNull();
+  }
+
+  @Test
   public void getRunningSpanCounts_twoSpanNames() {
     Span span1 = tracer.spanBuilder(SPAN_NAME_ONE).startSpan();
     Span span2 = tracer.spanBuilder(SPAN_NAME_TWO).startSpan();
@@ -91,6 +100,13 @@ public final class TracezDataAggregatorTest {
     counts = dataAggregator.getRunningSpanCounts();
     assertThat(counts.size()).isEqualTo(0);
     assertThat(counts.get(SPAN_NAME_ONE)).isNull();
+  }
+
+  @Test
+  public void getRunningSpansByName_noSpans() {
+    /* getRunningSpansByName should return an empty List */
+    assertThat(dataAggregator.getRunningSpansByName(SPAN_NAME_ONE).size()).isEqualTo(0);
+    assertThat(dataAggregator.getRunningSpansByName(SPAN_NAME_TWO).size()).isEqualTo(0);
   }
 
   @Test

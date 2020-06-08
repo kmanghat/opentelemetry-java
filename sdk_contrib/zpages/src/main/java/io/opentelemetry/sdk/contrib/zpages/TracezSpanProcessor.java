@@ -109,7 +109,7 @@ public final class TracezSpanProcessor implements SpanProcessor {
    * Returns a Collection of all running spans for {@link
    * io.opentelemetry.sdk.contrib.zpages.TracezSpanProcessor}.
    *
-   * @return a Collection of {@link io.opentelemetry.sdk.trace.ReadableSpan}.\
+   * @return a Collection of {@link io.opentelemetry.sdk.trace.ReadableSpan}.
    */
   public Collection<ReadableSpan> getRunningSpans() {
     synchronized (this) {
@@ -121,7 +121,7 @@ public final class TracezSpanProcessor implements SpanProcessor {
    * Returns a Collection of all completed spans for {@link
    * io.opentelemetry.sdk.contrib.zpages.TracezSpanProcessor}.
    *
-   * @return a Collection of {@link io.opentelemetry.sdk.trace.ReadableSpan}.\
+   * @return a Collection of {@link io.opentelemetry.sdk.trace.ReadableSpan}.
    */
   public Collection<ReadableSpan> getCompletedSpans() {
     synchronized (this) {
@@ -132,7 +132,7 @@ public final class TracezSpanProcessor implements SpanProcessor {
   /**
    * Returns a new Builder for {@link io.opentelemetry.sdk.contrib.zpages.TracezSpanProcessor}.
    *
-   * @return a new {@link io.opentelemetry.sdk.contrib.zpages.TracezSpanProcessor}.\
+   * @return a new {@link io.opentelemetry.sdk.contrib.zpages.TracezSpanProcessor}.
    */
   public static Builder newBuilder() {
     return new Builder();

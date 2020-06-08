@@ -28,7 +28,7 @@ import javax.annotation.concurrent.ThreadSafe;
 /**
  * A data aggregator for the traceZ zPage.
  *
- * <p>The traceZ data aggregator complies information about the running spans, span latencies, and
+ * <p>The traceZ data aggregator compiles information about the running spans, span latencies, and
  * error spans for the frontend of the zPage.
  */
 @ThreadSafe
@@ -48,7 +48,7 @@ public final class TracezDataAggregator {
    * Returns a Map of the running span counts for {@link
    * io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator}.
    *
-   * @return a Map of span counts for each span name.\
+   * @return a Map of span counts for each span name.
    */
   public Map<String, Integer> getRunningSpanCounts() {
     Collection<ReadableSpan> allRunningSpans = spanProcessor.getRunningSpans();
@@ -65,16 +65,16 @@ public final class TracezDataAggregator {
    * io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator}.
    *
    * @param spanName name to filter returned spans.
-   * @return a List of {@link io.opentelemetry.sdk.trace.data.SpanData}.\
+   * @return a List of {@link io.opentelemetry.sdk.trace.data.SpanData}.
    */
   public List<SpanData> getRunningSpansByName(String spanName) {
     Collection<ReadableSpan> allRunningSpans = spanProcessor.getRunningSpans();
-    List<SpanData> runningSpanData = new ArrayList<>();
+    List<SpanData> filteredSpans = new ArrayList<>();
     for (ReadableSpan span : allRunningSpans) {
       if (span.getName().equals(spanName)) {
-        runningSpanData.add(span.toSpanData());
+        filteredSpans.add(span.toSpanData());
       }
     }
-    return runningSpanData;
+    return filteredSpans;
   }
 }
