@@ -127,7 +127,7 @@ public final class TracezDataAggregator {
      *
      * @return the latency lower bound of the bucket.
      */
-    private long getLatencyLowerBound() {
+    public long getLatencyLowerBound() {
       return latencyLowerBound;
     }
 
@@ -136,7 +136,7 @@ public final class TracezDataAggregator {
      *
      * @return the latency upper bound of the bucket.
      */
-    private long getLatencyUpperBound() {
+    public long getLatencyUpperBound() {
       return latencyUpperBound;
     }
   }
