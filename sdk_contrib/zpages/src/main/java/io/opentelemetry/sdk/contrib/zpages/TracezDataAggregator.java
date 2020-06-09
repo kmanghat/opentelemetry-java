@@ -69,7 +69,7 @@ public final class TracezDataAggregator {
    * @param spanName name to filter returned spans.
    * @return a List of {@link io.opentelemetry.sdk.trace.data.SpanData}.
    */
-  public List<SpanData> getRunningSpansByName(String spanName) {
+  public List<SpanData> getRunningSpans(String spanName) {
     Collection<ReadableSpan> allRunningSpans = spanProcessor.getRunningSpans();
     List<SpanData> filteredSpans = new ArrayList<>();
     for (ReadableSpan span : allRunningSpans) {
@@ -153,7 +153,9 @@ public final class TracezDataAggregator {
     Collection<ReadableSpan> allCompletedSpans = spanProcessor.getCompletedSpans();
     Map<String, Integer> numSpansPerName = new HashMap<>();
     for (ReadableSpan span : allCompletedSpans) {
-      if (span.getLatencyNanos() >= lowerBound && span.getLatencyNanos() < upperBound) {
+      if (span.toSpanData().getStatus().isOk()
+          && span.getLatencyNanos() >= lowerBound
+          && span.getLatencyNanos() < upperBound) {
         Integer prevValue = numSpansPerName.get(span.getName());
         numSpansPerName.put(span.getName(), prevValue != null ? prevValue + 1 : 1);
       }
@@ -187,12 +189,12 @@ public final class TracezDataAggregator {
    * @param upperBound latency upper bound (exclusive)
    * @return a List of {@link io.opentelemetry.sdk.trace.data.SpanData}.
    */
-  public List<SpanData> getCompletedSpansByLatency(
-      String spanName, long lowerBound, long upperBound) {
+  public List<SpanData> getOkSpans(String spanName, long lowerBound, long upperBound) {
     Collection<ReadableSpan> allCompletedSpans = spanProcessor.getCompletedSpans();
     List<SpanData> filteredSpans = new ArrayList<>();
     for (ReadableSpan span : allCompletedSpans) {
-      if (span.getName().equals(spanName)
+      if (span.toSpanData().getStatus().isOk()
+          && span.getName().equals(spanName)
           && span.getLatencyNanos() >= lowerBound
           && span.getLatencyNanos() < upperBound) {
         filteredSpans.add(span.toSpanData());

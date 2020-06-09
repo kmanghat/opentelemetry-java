@@ -103,35 +103,35 @@ public final class TracezDataAggregatorTest {
   }
 
   @Test
-  public void getRunningSpansByName_noSpans() {
-    /* getRunningSpansByName should return an empty List */
-    assertThat(dataAggregator.getRunningSpansByName(SPAN_NAME_ONE).size()).isEqualTo(0);
-    assertThat(dataAggregator.getRunningSpansByName(SPAN_NAME_TWO).size()).isEqualTo(0);
+  public void getRunningSpans_noSpans() {
+    /* getRunningSpans should return an empty List */
+    assertThat(dataAggregator.getRunningSpans(SPAN_NAME_ONE).size()).isEqualTo(0);
+    assertThat(dataAggregator.getRunningSpans(SPAN_NAME_TWO).size()).isEqualTo(0);
   }
 
   @Test
-  public void getRunningSpansByName_twoSpanNames() {
+  public void getRunningSpans_twoSpanNames() {
     Span span1 = tracer.spanBuilder(SPAN_NAME_ONE).startSpan();
     Span span2 = tracer.spanBuilder(SPAN_NAME_TWO).startSpan();
-    /* getRunningSpansByName should return a List with only the corresponding span */
-    assertThat(dataAggregator.getRunningSpansByName(SPAN_NAME_ONE))
+    /* getRunningSpans should return a List with only the corresponding span */
+    assertThat(dataAggregator.getRunningSpans(SPAN_NAME_ONE))
         .containsExactly(((ReadableSpan) span1).toSpanData());
-    assertThat(dataAggregator.getRunningSpansByName(SPAN_NAME_TWO))
+    assertThat(dataAggregator.getRunningSpans(SPAN_NAME_TWO))
         .containsExactly(((ReadableSpan) span2).toSpanData());
     span1.end();
     span2.end();
-    /* getRunningSpansByName should return an empty List for each span name */
-    assertThat(dataAggregator.getRunningSpansByName(SPAN_NAME_ONE).size()).isEqualTo(0);
-    assertThat(dataAggregator.getRunningSpansByName(SPAN_NAME_TWO).size()).isEqualTo(0);
+    /* getRunningSpans should return an empty List for each span name */
+    assertThat(dataAggregator.getRunningSpans(SPAN_NAME_ONE).size()).isEqualTo(0);
+    assertThat(dataAggregator.getRunningSpans(SPAN_NAME_TWO).size()).isEqualTo(0);
   }
 
   @Test
-  public void getRunningSpansByName_oneSpanName() {
+  public void getRunningSpans_oneSpanName() {
     Span span1 = tracer.spanBuilder(SPAN_NAME_ONE).startSpan();
     Span span2 = tracer.spanBuilder(SPAN_NAME_ONE).startSpan();
     Span span3 = tracer.spanBuilder(SPAN_NAME_ONE).startSpan();
-    /* getRunningSpansByName should return a List with all 3 spans */
-    List<SpanData> spans = dataAggregator.getRunningSpansByName(SPAN_NAME_ONE);
+    /* getRunningSpans should return a List with all 3 spans */
+    List<SpanData> spans = dataAggregator.getRunningSpans(SPAN_NAME_ONE);
     assertThat(spans.size()).isEqualTo(3);
     assertThat(spans).contains(((ReadableSpan) span1).toSpanData());
     assertThat(spans).contains(((ReadableSpan) span2).toSpanData());
@@ -139,7 +139,7 @@ public final class TracezDataAggregatorTest {
     span1.end();
     span2.end();
     span3.end();
-    /* getRunningSpansByName should return an empty List */
-    assertThat(dataAggregator.getRunningSpansByName(SPAN_NAME_ONE).size()).isEqualTo(0);
+    /* getRunningSpans should return an empty List */
+    assertThat(dataAggregator.getRunningSpans(SPAN_NAME_ONE).size()).isEqualTo(0);
   }
 }
