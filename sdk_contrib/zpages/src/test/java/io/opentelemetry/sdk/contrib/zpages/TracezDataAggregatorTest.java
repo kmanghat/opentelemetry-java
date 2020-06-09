@@ -155,20 +155,20 @@ public final class TracezDataAggregatorTest {
 
   @Test
   public void getSpanLatencyCounts_oneSpanPerLatencyBucket() {
-    for (LatencyBoundaries boundaries : LatencyBoundaries.values()) {
+    for (LatencyBoundaries bucket : LatencyBoundaries.values()) {
       Span span = tracer.spanBuilder(SPAN_NAME_ONE).startSpan();
-      testClock.advanceNanos(boundaries.getLatencyLowerBound());
+      testClock.advanceNanos(bucket.getLatencyLowerBound());
       span.end();
     }
     /* getSpanLatencyCounts should return 1 span per latency bucket */
     Map<LatencyBoundaries, Map<String, Integer>> allCounts = dataAggregator.getSpanLatencyCounts();
-    for (LatencyBoundaries boundaries : LatencyBoundaries.values()) {
+    for (LatencyBoundaries bucket : LatencyBoundaries.values()) {
       Map<String, Integer> counts =
           dataAggregator.getSpanLatencyCounts(
-              boundaries.getLatencyLowerBound(), boundaries.getLatencyUpperBound());
+              bucket.getLatencyLowerBound(), bucket.getLatencyUpperBound());
       assertThat(counts.size()).isEqualTo(1);
       assertThat(counts.get(SPAN_NAME_ONE)).isEqualTo(1);
-      assertThat(counts.entrySet()).isEqualTo(allCounts.get(boundaries).entrySet());
+      assertThat(counts.entrySet()).isEqualTo(allCounts.get(bucket).entrySet());
     }
   }
 
@@ -195,7 +195,7 @@ public final class TracezDataAggregatorTest {
   }
 
   @Test
-  public void getOkSpans_oneSpanNameDifferentLatencies() {
+  public void getOkSpans_oneSpanNameWithDifferentLatencies() {
     Span span1 = tracer.spanBuilder(SPAN_NAME_ONE).startSpan();
     Span span2 = tracer.spanBuilder(SPAN_NAME_ONE).startSpan();
     /* getOkSpans should return an empty List */
