@@ -142,8 +142,8 @@ public final class TracezDataAggregator {
   }
 
   /**
-   * Returns a Map of counts for the completed spans within [lowerBound, upperBound) {@link
-   * io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator}.
+   * Returns a Map of counts for the {@link io.opentelemetry.trace.Status#OK} spans within
+   * [lowerBound, upperBound) {@link io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator}.
    *
    * @param lowerBound latency lower bound (inclusive)
    * @param upperBound latency upper bound (exclusive)
@@ -164,7 +164,7 @@ public final class TracezDataAggregator {
   }
 
   /**
-   * Returns a nested Map of counts for all completed spans {@link
+   * Returns a nested Map of counts for all {@link io.opentelemetry.trace.Status#OK} spans {@link
    * io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator}.
    *
    * @return a Map of span-count Maps for each latency boundary.
@@ -181,8 +181,9 @@ public final class TracezDataAggregator {
   }
 
   /**
-   * Returns a List of all completed spans with a given span name between [lowerBound, upperBound)
-   * for {@link io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator}.
+   * Returns a List of all {@link io.opentelemetry.trace.Status#OK} spans with a given span name
+   * between [lowerBound, upperBound) for {@link
+   * io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator}.
    *
    * @param spanName name to filter returned spans.
    * @param lowerBound latency lower bound (inclusive)
