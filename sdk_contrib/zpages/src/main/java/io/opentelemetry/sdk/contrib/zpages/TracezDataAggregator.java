@@ -80,6 +80,11 @@ public final class TracezDataAggregator {
     return filteredSpans;
   }
 
+  /**
+   * A class of boundaries for the latency buckets. The completed spans with a status of {@link
+   * io.opentelemetry.trace.Status#OK} are categorized into one of these buckets om the traceZ
+   * zPage.
+   */
   public enum LatencyBoundaries {
     /** Stores finished successful requests of duration within the interval [0, 10us). */
     ZERO_MICROSx10(0, TimeUnit.MICROSECONDS.toNanos(10)),
