@@ -193,7 +193,7 @@ public final class TracezDataAggregator {
    * Returns a nested Map of counts for all {@link io.opentelemetry.trace.Status#OK} spans in {@link
    * io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator}.
    *
-   * @return a Map of spam-count Maps indexed by latency boundaries for each span name.
+   * @return a Map of span-count Maps indexed by latency boundaries for each span name.
    */
   public Map<String, Map<LatencyBoundaries, Integer>> getSpanLatencyCounts() {
     Map<String, Map<LatencyBoundaries, Integer>> numSpansPerName = new HashMap<>();
