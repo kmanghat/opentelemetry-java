@@ -190,7 +190,8 @@ public final class TracezDataAggregator {
   }
 
   /**
-   * Returns a nested Map of counts indexed by latency boundaries for all {@link io.opentelemetry.trace.Status#OK} spans in {@link
+   * Returns a nested Map of counts indexed by latency boundaries for all {@link
+   * io.opentelemetry.trace.Status#OK} spans in {@link
    * io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator}.
    *
    * @return a Map of spam-count Maps for each span name.
@@ -198,9 +199,12 @@ public final class TracezDataAggregator {
   public Map<String, Map<LatencyBoundaries, Integer>> getSpanLatencyCounts() {
     Map<String, Map<LatencyBoundaries, Integer>> numSpansPerName = new HashMap<>();
     for (LatencyBoundaries bucket : LatencyBoundaries.values()) {
-      for (Map.Entry<String, Integer> entry : getSpanLatencyCounts(bucket.getLatencyLowerBound(), bucket.getLatencyUpperBound()).entrySet()) {
+      for (Map.Entry<String, Integer> entry :
+          getSpanLatencyCounts(bucket.getLatencyLowerBound(), bucket.getLatencyUpperBound())
+              .entrySet()) {
         if (!numSpansPerName.containsKey(entry.getKey())) {
-          numSpansPerName.put(entry.getKey(), new EnumMap<LatencyBoundaries, Integer>(LatencyBoundaries.class));
+          numSpansPerName.put(
+              entry.getKey(), new EnumMap<LatencyBoundaries, Integer>(LatencyBoundaries.class));
         }
         numSpansPerName.get(entry.getKey()).put(bucket, entry.getValue());
       }
