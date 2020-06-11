@@ -49,10 +49,10 @@ public final class TracezDataAggregator {
   }
 
   /**
-   * Returns a List of all span names for {@link
+   * Returns a Set of running and completed span names for {@link
    * io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator}.
    *
-   * @return a List of {@link String}.
+   * @return a Set of {@link String}.
    */
   public Set<String> getSpanNames() {
     Set<String> spanNames = new TreeSet<>();
@@ -190,11 +190,10 @@ public final class TracezDataAggregator {
   }
 
   /**
-   * Returns a nested Map of counts indexed by latency boundaries for all {@link
-   * io.opentelemetry.trace.Status#OK} spans in {@link
+   * Returns a nested Map of counts for all {@link io.opentelemetry.trace.Status#OK} spans in {@link
    * io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator}.
    *
-   * @return a Map of spam-count Maps for each span name.
+   * @return a Map of spam-count Maps indexed by latency boundaries for each span name.
    */
   public Map<String, Map<LatencyBoundaries, Integer>> getSpanLatencyCounts() {
     Map<String, Map<LatencyBoundaries, Integer>> numSpansPerName = new HashMap<>();

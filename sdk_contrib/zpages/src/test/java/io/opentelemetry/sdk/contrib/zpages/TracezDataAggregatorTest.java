@@ -53,7 +53,7 @@ public final class TracezDataAggregatorTest {
   }
 
   @Test
-  public void getSpanNames_twoNames() {
+  public void getSpanNames_twoUniqueNames() {
     /* getSpanNames should return a an empty set initially */
     Set<String> names = dataAggregator.getSpanNames();
     assertThat(names.size()).isEqualTo(0);
