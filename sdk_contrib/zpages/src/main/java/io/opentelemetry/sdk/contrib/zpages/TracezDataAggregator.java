@@ -24,6 +24,8 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.ThreadSafe;
 
@@ -44,6 +46,25 @@ public final class TracezDataAggregator {
    */
   public TracezDataAggregator(TracezSpanProcessor spanProcessor) {
     this.spanProcessor = spanProcessor;
+  }
+
+  /**
+   * Returns a List of all span names for {@link
+   * io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator}.
+   *
+   * @return a List of {@link String}.
+   */
+  public Set<String> getSpanNames() {
+    Set<String> spanNames = new TreeSet<>();
+    Collection<ReadableSpan> allRunningSpans = spanProcessor.getRunningSpans();
+    for (ReadableSpan span : allRunningSpans) {
+      spanNames.add(span.getName());
+    }
+    Collection<ReadableSpan> allCompletedSpans = spanProcessor.getCompletedSpans();
+    for (ReadableSpan span : allCompletedSpans) {
+      spanNames.add(span.getName());
+    }
+    return spanNames;
   }
 
   /**
@@ -169,20 +190,22 @@ public final class TracezDataAggregator {
   }
 
   /**
-   * Returns a nested Map of counts for all {@link io.opentelemetry.trace.Status#OK} spans {@link
+   * Returns a nested Map of counts indexed by latency boundaries for all {@link io.opentelemetry.trace.Status#OK} spans in {@link
    * io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator}.
    *
-   * @return a Map of span-count Maps for each latency boundary.
+   * @return a Map of spam-count Maps for each span name.
    */
-  public Map<LatencyBoundaries, Map<String, Integer>> getSpanLatencyCounts() {
-    Map<LatencyBoundaries, Map<String, Integer>> numSpansPerBoundary =
-        new EnumMap<>(LatencyBoundaries.class);
+  public Map<String, Map<LatencyBoundaries, Integer>> getSpanLatencyCounts() {
+    Map<String, Map<LatencyBoundaries, Integer>> numSpansPerName = new HashMap<>();
     for (LatencyBoundaries bucket : LatencyBoundaries.values()) {
-      numSpansPerBoundary.put(
-          bucket,
-          getSpanLatencyCounts(bucket.getLatencyLowerBound(), bucket.getLatencyUpperBound()));
+      for (Map.Entry<String, Integer> entry : getSpanLatencyCounts(bucket.getLatencyLowerBound(), bucket.getLatencyUpperBound()).entrySet()) {
+        if (!numSpansPerName.containsKey(entry.getKey())) {
+          numSpansPerName.put(entry.getKey(), new EnumMap<LatencyBoundaries, Integer>(LatencyBoundaries.class));
+        }
+        numSpansPerName.get(entry.getKey()).put(bucket, entry.getValue());
+      }
     }
-    return numSpansPerBoundary;
+    return numSpansPerName;
   }
 
   /**
