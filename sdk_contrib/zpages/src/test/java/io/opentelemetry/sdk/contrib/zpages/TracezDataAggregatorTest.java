@@ -27,6 +27,7 @@ import io.opentelemetry.trace.Span;
 import io.opentelemetry.trace.Tracer;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,6 +50,31 @@ public final class TracezDataAggregatorTest {
   public void setup() {
     MockitoAnnotations.initMocks(this);
     tracerSdkProvider.addSpanProcessor(spanProcessor);
+  }
+
+  @Test
+  public void getSpanNames_twoUniqueNames() {
+    /* getSpanNames should return a an empty set initially */
+    Set<String> names = dataAggregator.getSpanNames();
+    assertThat(names.size()).isEqualTo(0);
+
+    /* getSpanNames should return a set with 2 span names */
+    Span span1 = tracer.spanBuilder(SPAN_NAME_ONE).startSpan();
+    Span span2 = tracer.spanBuilder(SPAN_NAME_TWO).startSpan();
+    Span span3 = tracer.spanBuilder(SPAN_NAME_TWO).startSpan();
+    names = dataAggregator.getSpanNames();
+    assertThat(names.size()).isEqualTo(2);
+    assertThat(names).contains(SPAN_NAME_ONE);
+    assertThat(names).contains(SPAN_NAME_TWO);
+
+    /* getSpanNames should still return a set with 2 span names */
+    span1.end();
+    span2.end();
+    span3.end();
+    names = dataAggregator.getSpanNames();
+    assertThat(names.size()).isEqualTo(2);
+    assertThat(names).contains(SPAN_NAME_ONE);
+    assertThat(names).contains(SPAN_NAME_TWO);
   }
 
   @Test
@@ -161,14 +187,17 @@ public final class TracezDataAggregatorTest {
       span.end();
     }
     /* getSpanLatencyCounts should return 1 span per latency bucket */
-    Map<LatencyBoundaries, Map<String, Integer>> allCounts = dataAggregator.getSpanLatencyCounts();
+    Map<String, Map<LatencyBoundaries, Integer>> allCounts = dataAggregator.getSpanLatencyCounts();
     for (LatencyBoundaries bucket : LatencyBoundaries.values()) {
       Map<String, Integer> counts =
           dataAggregator.getSpanLatencyCounts(
               bucket.getLatencyLowerBound(), bucket.getLatencyUpperBound());
       assertThat(counts.size()).isEqualTo(1);
       assertThat(counts.get(SPAN_NAME_ONE)).isEqualTo(1);
-      assertThat(counts.entrySet()).isEqualTo(allCounts.get(bucket).entrySet());
+      for (Map.Entry<String, Integer> countsEntry : counts.entrySet()) {
+        assertThat(countsEntry.getValue())
+            .isEqualTo(allCounts.get(countsEntry.getKey()).get(bucket));
+      }
     }
   }
 

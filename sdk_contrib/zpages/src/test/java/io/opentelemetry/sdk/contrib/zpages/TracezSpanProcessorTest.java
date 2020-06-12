@@ -79,11 +79,21 @@ public final class TracezSpanProcessorTest {
   }
 
   @Test
-  public void onStart_notSampledSpan_notInCache() {
+  public void onStart_notSampledSpan_inCache() {
     TracezSpanProcessor spanProcessor = TracezSpanProcessor.newBuilder().build();
     /* Return a non-sampled span, which should not be added to the running cache by default */
     when(readableSpan.getSpanContext()).thenReturn(NOT_SAMPLED_SPAN_CONTEXT);
     spanProcessor.onStart(readableSpan);
+    assertSpanCacheSizes(spanProcessor, 1, 0);
+  }
+
+  @Test
+  public void onEnd_notSampledSpan_notInCache() {
+    TracezSpanProcessor spanProcessor = TracezSpanProcessor.newBuilder().build();
+    /* Return a non-sampled span, which should not be added to the running cache by default */
+    when(readableSpan.getSpanContext()).thenReturn(NOT_SAMPLED_SPAN_CONTEXT);
+    spanProcessor.onStart(readableSpan);
+    spanProcessor.onEnd(readableSpan);
     assertSpanCacheSizes(spanProcessor, 0, 0);
   }
 
@@ -95,9 +105,11 @@ public final class TracezSpanProcessorTest {
     TracezSpanProcessor spanProcessor =
         TracezSpanProcessor.newBuilder().readProperties(properties).build();
 
-    /* Return a non-sampled span, which should not be added to the running cache */
+    /* Return a non-sampled span, which should not be added to the completed cache */
     when(readableSpan.getSpanContext()).thenReturn(NOT_SAMPLED_SPAN_CONTEXT);
     spanProcessor.onStart(readableSpan);
+    assertSpanCacheSizes(spanProcessor, 1, 0);
+    spanProcessor.onEnd(readableSpan);
     assertSpanCacheSizes(spanProcessor, 0, 0);
   }
 
