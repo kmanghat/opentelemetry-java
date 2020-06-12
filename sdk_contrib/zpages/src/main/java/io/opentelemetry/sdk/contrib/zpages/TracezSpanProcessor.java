@@ -65,9 +65,6 @@ public final class TracezSpanProcessor implements SpanProcessor {
 
   @Override
   public void onStart(ReadableSpan span) {
-    if (sampled && !span.getSpanContext().getTraceFlags().isSampled()) {
-      return;
-    }
     synchronized (this) {
       runningSpanCache.put(span.getSpanContext().getSpanId(), span);
     }
@@ -80,13 +77,12 @@ public final class TracezSpanProcessor implements SpanProcessor {
 
   @Override
   public void onEnd(ReadableSpan span) {
-    if (sampled && !span.getSpanContext().getTraceFlags().isSampled()) {
-      return;
-    }
+    SpanId id = span.getSpanContext().getSpanId();
     synchronized (this) {
-      SpanId id = span.getSpanContext().getSpanId();
       runningSpanCache.remove(id);
-      completedSpanCache.put(id, span);
+      if (!sampled || span.getSpanContext().getTraceFlags().isSampled()) {
+        completedSpanCache.put(id, span);
+      }
     }
   }
 

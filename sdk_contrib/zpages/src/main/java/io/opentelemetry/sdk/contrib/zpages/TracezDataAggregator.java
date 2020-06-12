@@ -24,6 +24,8 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.ThreadSafe;
 
@@ -44,6 +46,25 @@ public final class TracezDataAggregator {
    */
   public TracezDataAggregator(TracezSpanProcessor spanProcessor) {
     this.spanProcessor = spanProcessor;
+  }
+
+  /**
+   * Returns a Set of running and completed span names for {@link
+   * io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator}.
+   *
+   * @return a Set of {@link String}.
+   */
+  public Set<String> getSpanNames() {
+    Set<String> spanNames = new TreeSet<>();
+    Collection<ReadableSpan> allRunningSpans = spanProcessor.getRunningSpans();
+    for (ReadableSpan span : allRunningSpans) {
+      spanNames.add(span.getName());
+    }
+    Collection<ReadableSpan> allCompletedSpans = spanProcessor.getCompletedSpans();
+    for (ReadableSpan span : allCompletedSpans) {
+      spanNames.add(span.getName());
+    }
+    return spanNames;
   }
 
   /**
@@ -80,6 +101,11 @@ public final class TracezDataAggregator {
     return filteredSpans;
   }
 
+  /**
+   * A class of boundaries for the latency buckets. The completed spans with a status of {@link
+   * io.opentelemetry.trace.Status#OK} are categorized into one of these buckets om the traceZ
+   * zPage.
+   */
   public enum LatencyBoundaries {
     /** Stores finished successful requests of duration within the interval [0, 10us). */
     ZERO_MICROSx10(0, TimeUnit.MICROSECONDS.toNanos(10)),
@@ -164,20 +190,27 @@ public final class TracezDataAggregator {
   }
 
   /**
-   * Returns a nested Map of counts for all {@link io.opentelemetry.trace.Status#OK} spans {@link
-   * io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator}.
+   * Returns a Map of span names to counts for all {@link io.opentelemetry.trace.Status#OK} spans in
+   * {@link io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator}.
    *
-   * @return a Map of span-count Maps for each latency boundary.
+   * @return a Map of span names to counts, where the counts are further indexed by the latency
+   *     boundaries.
    */
-  public Map<LatencyBoundaries, Map<String, Integer>> getSpanLatencyCounts() {
-    Map<LatencyBoundaries, Map<String, Integer>> numSpansPerBoundary =
-        new EnumMap<>(LatencyBoundaries.class);
+  public Map<String, Map<LatencyBoundaries, Integer>> getSpanLatencyCounts() {
+    Map<String, Map<LatencyBoundaries, Integer>> numSpansPerName = new HashMap<>();
     for (LatencyBoundaries bucket : LatencyBoundaries.values()) {
-      numSpansPerBoundary.put(
-          bucket,
-          getSpanLatencyCounts(bucket.getLatencyLowerBound(), bucket.getLatencyUpperBound()));
+      Map<String, Integer> latencyCounts =
+          getSpanLatencyCounts(bucket.getLatencyLowerBound(), bucket.getLatencyUpperBound());
+      for (Map.Entry<String, Integer> spanNameToCount : latencyCounts.entrySet()) {
+        if (!numSpansPerName.containsKey(spanNameToCount.getKey())) {
+          numSpansPerName.put(
+              spanNameToCount.getKey(),
+              new EnumMap<LatencyBoundaries, Integer>(LatencyBoundaries.class));
+        }
+        numSpansPerName.get(spanNameToCount.getKey()).put(bucket, spanNameToCount.getValue());
+      }
     }
-    return numSpansPerBoundary;
+    return numSpansPerName;
   }
 
   /**
