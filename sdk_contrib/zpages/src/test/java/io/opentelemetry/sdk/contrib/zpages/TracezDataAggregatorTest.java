@@ -53,16 +53,19 @@ public final class TracezDataAggregatorTest {
   }
 
   @Test
-  public void getSpanNames_twoUniqueNames() {
+  public void getSpanNames_noSpans() {
     /* getSpanNames should return a an empty set initially */
     Set<String> names = dataAggregator.getSpanNames();
     assertThat(names.size()).isEqualTo(0);
+  }
 
+  @Test
+  public void getSpanNames_twoSpanNames() {
     /* getSpanNames should return a set with 2 span names */
     Span span1 = tracer.spanBuilder(SPAN_NAME_ONE).startSpan();
     Span span2 = tracer.spanBuilder(SPAN_NAME_TWO).startSpan();
     Span span3 = tracer.spanBuilder(SPAN_NAME_TWO).startSpan();
-    names = dataAggregator.getSpanNames();
+    Set<String> names = dataAggregator.getSpanNames();
     assertThat(names.size()).isEqualTo(2);
     assertThat(names).contains(SPAN_NAME_ONE);
     assertThat(names).contains(SPAN_NAME_TWO);

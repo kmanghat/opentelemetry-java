@@ -190,22 +190,24 @@ public final class TracezDataAggregator {
   }
 
   /**
-   * Returns a nested Map of counts for all {@link io.opentelemetry.trace.Status#OK} spans in {@link
-   * io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator}.
+   * Returns a Map of span names to counts for all {@link io.opentelemetry.trace.Status#OK} spans in
+   * {@link io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator}.
    *
-   * @return a Map of span-count Maps indexed by latency boundaries for each span name.
+   * @return a Map of span names to counts, where the counts are further indexed by the latency
+   *     boundaries.
    */
   public Map<String, Map<LatencyBoundaries, Integer>> getSpanLatencyCounts() {
     Map<String, Map<LatencyBoundaries, Integer>> numSpansPerName = new HashMap<>();
     for (LatencyBoundaries bucket : LatencyBoundaries.values()) {
-      for (Map.Entry<String, Integer> entry :
-          getSpanLatencyCounts(bucket.getLatencyLowerBound(), bucket.getLatencyUpperBound())
-              .entrySet()) {
-        if (!numSpansPerName.containsKey(entry.getKey())) {
+      Map<String, Integer> latencyCounts =
+          getSpanLatencyCounts(bucket.getLatencyLowerBound(), bucket.getLatencyUpperBound());
+      for (Map.Entry<String, Integer> spanNameToCount : latencyCounts.entrySet()) {
+        if (!numSpansPerName.containsKey(spanNameToCount.getKey())) {
           numSpansPerName.put(
-              entry.getKey(), new EnumMap<LatencyBoundaries, Integer>(LatencyBoundaries.class));
+              spanNameToCount.getKey(),
+              new EnumMap<LatencyBoundaries, Integer>(LatencyBoundaries.class));
         }
-        numSpansPerName.get(entry.getKey()).put(bucket, entry.getValue());
+        numSpansPerName.get(spanNameToCount.getKey()).put(bucket, spanNameToCount.getValue());
       }
     }
     return numSpansPerName;
