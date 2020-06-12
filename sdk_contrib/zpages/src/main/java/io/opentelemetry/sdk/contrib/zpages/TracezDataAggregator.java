@@ -18,7 +18,6 @@ package io.opentelemetry.sdk.contrib.zpages;
 
 import io.opentelemetry.sdk.trace.ReadableSpan;
 import io.opentelemetry.sdk.trace.data.SpanData;
-import io.opentelemetry.trace.Span;
 import io.opentelemetry.trace.Status.CanonicalCode;
 import java.util.ArrayList;
 import java.util.Collection;
