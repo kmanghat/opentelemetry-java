@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 final class TracezZPageHandler extends ZPageHandler {
   private enum SampleType {
@@ -200,7 +199,7 @@ final class TracezZPageHandler extends ZPageHandler {
     out.write("<table style=\"border-spacing: 0; border: 1px solid #363636;\">");
     emitSummaryTableHeader(out, formatter);
 
-    Set<String> spanNames = new TreeSet<>();
+    Set<String> spanNames = dataAggregator.getSpanNames();
     boolean zebraStripe = false;
 
     Map<String, Integer> runningSpanCounts = dataAggregator.getRunningSpanCounts();
