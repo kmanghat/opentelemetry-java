@@ -284,7 +284,7 @@ public final class TracezDataAggregatorTest {
       }
     }
     /* getErrorSpanCounts should be storing CanonicalCode.values().length - 1 spans because every
-    code, expect OK, indicates an error */
+    code, expect OK, represents an error */
     Map<String, Integer> errorCounts = dataAggregator.getErrorSpanCounts();
     assertThat(errorCounts.size()).isEqualTo(1);
     assertThat(errorCounts.get(SPAN_NAME_ONE)).isEqualTo(CanonicalCode.values().length - 1);
