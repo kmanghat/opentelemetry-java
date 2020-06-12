@@ -233,9 +233,11 @@ final class TracezZPageHandler extends ZPageHandler {
 
   private static void emitSpanNameAndCount(
       Formatter formatter, String spanName, int count, SampleType type) {
-    formatter.format("<p><b> Span Name: %s </b></p>", HtmlEscapers.htmlEscaper().escape(spanName));
     formatter.format(
-        "<p><b> Number of %s: %d </b></p>",
+        "<p class=\"align-center\"><b> Span Name: %s </b></p>",
+        HtmlEscapers.htmlEscaper().escape(spanName));
+    formatter.format(
+        "<p class=\"align-center\"><b> Number of %s: %d </b></p>",
         type == SampleType.RUNNING
             ? "running"
             : type == SampleType.LATENCY ? "latency samples" : "error samples",
@@ -302,6 +304,7 @@ final class TracezZPageHandler extends ZPageHandler {
             }
           }
         }
+        out.write("<h2>Span Details</h2>");
         emitSpanNameAndCount(formatter, spanName, spans == null ? 0 : spans.size(), type);
 
         if (spans != null) {
