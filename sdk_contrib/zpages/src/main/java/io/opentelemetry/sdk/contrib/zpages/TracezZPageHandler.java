@@ -28,6 +28,8 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.text.Normalizer.Form;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Formatter;
@@ -241,6 +243,21 @@ final class TracezZPageHandler extends ZPageHandler {
             ? "running"
             : type == SampleType.LATENCY ? "latency samples" : "error samples",
         count);
+  }
+
+  private static void emitSpanDetails(
+      PrintWriter out, Formatter formatter, Collection<SpanData> spans) {
+    out.write("<pre>\n");
+    formatter.format("%-23s %18s%n", "When", "Elapsed(s)");
+    out.write("-------------------------------------------\n");
+    for (SpanData span : spans) {
+      emitSingleSpanDetails(formatter, span);
+    }
+    out.write("</pre>\n");
+  }
+
+  private static void emitSingleSpanDetails(Formatter formatter, SpanData span) {
+    //
   }
 
   /**
