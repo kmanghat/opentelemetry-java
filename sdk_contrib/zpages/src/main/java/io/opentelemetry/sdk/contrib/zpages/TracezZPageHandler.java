@@ -205,8 +205,9 @@ final class TracezZPageHandler extends ZPageHandler {
     boolean zebraStripe = false;
 
     Map<String, Integer> runningSpanCounts = dataAggregator.getRunningSpanCounts();
-    // Map<String, Map<LatencyBoundaries, Integer>> latencySpanCounts =
-    // dataAggregator.getSpanLatencyCounts();
+    Map<String, Map<LatencyBoundaries, Integer>> latencySpanCounts =
+        dataAggregator.getSpanLatencyCounts();
+    // Map<String, Integer> errorSpanCounts = dataAggregator.getErrorSpanCounts();
     for (String spanName : spanNames) {
       if (zebraStripe) {
         formatter.format("<tr style=\"background-color: %s\">", ZEBRA_STRIPE_COLOR);
@@ -223,12 +224,23 @@ final class TracezZPageHandler extends ZPageHandler {
       emitSummaryTableCell(out, formatter, spanName, numOfRunningSpans, SampleType.RUNNING, 0);
 
       // Latency based sampled spans column
-      // int subtype = 0;
-      // for (LatencyBoundaries lbs : LatencyBoundaries.values()) {
-      //   if (latencySpanCounts.contains(spanName))
-      // }
+      int subtype = 0;
+      for (LatencyBoundaries lbs : LatencyBoundaries.values()) {
+        if (latencySpanCounts.containsKey(spanName)) {
+          int numOfLatencySamples =
+              latencySpanCounts.get(spanName).containsKey(lbs)
+                  ? latencySpanCounts.get(spanName).get(lbs)
+                  : 0;
+          emitSummaryTableCell(
+              out, formatter, spanName, numOfLatencySamples, SampleType.LATENCY, subtype++);
+        } else {
+          emitSummaryTableCell(out, formatter, spanName, 0, SampleType.LATENCY, subtype++);
+        }
+      }
 
       // Error based sampled spans column
+      // int numOfErrorSamples = errorSpanCounts.containsKey(spanName) ?
+      // errorSpanCounts.get(spanName) : 0;
     }
   }
 
