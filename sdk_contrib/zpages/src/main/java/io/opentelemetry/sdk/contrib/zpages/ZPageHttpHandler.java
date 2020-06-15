@@ -16,13 +16,13 @@
 
 package io.opentelemetry.sdk.contrib.zpages;
 
-import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 
-/** An {@link HttpHanlder} that will be used to render HTML pages using any {@code ZPageHandler}.  */
+/** An {@link HttpHanlder} that will be used to render HTML pages using any {@code ZPageHandler}. */
 final class ZPageHttpHandler implements HttpHandler {
-    
-    @Override
-    public final void handle(HttpExchange httpExchange) throws IOException {}
+
+  @Override
+  public final void handle(HttpExchange httpExchange) throws IOException {}
 }
