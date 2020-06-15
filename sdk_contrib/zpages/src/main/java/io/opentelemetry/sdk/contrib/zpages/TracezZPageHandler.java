@@ -263,12 +263,12 @@ final class TracezZPageHandler extends ZPageHandler {
     formatter.format("%-23s %18s%n", "When", "Elapsed(s)");
     out.write("-------------------------------------------\n");
     for (SpanData span : spans) {
-      emitSingleSpanDetails(formatter, span);
+      emitSingleSpan(formatter, span);
     }
     out.write("</pre>\n");
   }
 
-  private static void emitSingleSpanDetails(Formatter formatter, SpanData span) {
+  private static void emitSingleSpan(Formatter formatter, SpanData span) {
     //
   }
 
