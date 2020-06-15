@@ -41,26 +41,39 @@ public final class TracezZPageHandlerTest {
   private final Tracer tracer = tracerSdkProvider.get("TracezZPageHandlerTest");
   private final TracezSpanProcessor spanProcessor = TracezSpanProcessor.newBuilder().build();
   private final TracezDataAggregator dataAggregator = new TracezDataAggregator(spanProcessor);
-  private static final String SPAN_NAME_ONE = "one";
-  private static final String SPAN_NAME_TWO = "two";
+  private static final String FINISHED_SPAN_ONE = "FinishedSpanOne";
+  private static final String FINISHED_SPAN_TWO = "FinishedSpanTwo";
+  private static final String RUNNING_SPAN_ONE = "RunningSpanOne";
 
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
     tracerSdkProvider.addSpanProcessor(spanProcessor);
-    Span span1 = tracer.spanBuilder(SPAN_NAME_ONE).startSpan();
-    Span span2 = tracer.spanBuilder(SPAN_NAME_TWO).startSpan();
-    span1.end();
-    span2.end();
   }
 
   @Test
   public void emitSummaryTableForEachSpan() {
     OutputStream output = new ByteArrayOutputStream();
+    Span span1 = tracer.spanBuilder(FINISHED_SPAN_ONE).startSpan();
+    Span span2 = tracer.spanBuilder(FINISHED_SPAN_TWO).startSpan();
+    span1.end();
+    span2.end();
     TracezZPageHandler tracezZPageHandler = TracezZPageHandler.create(dataAggregator);
     Map<String, String> queryMap = Collections.emptyMap();
     tracezZPageHandler.emitHtml(queryMap, output);
-    assertThat(output.toString()).contains(SPAN_NAME_ONE);
-    assertThat(output.toString()).contains(SPAN_NAME_TWO);
+    assertThat(output.toString()).contains(FINISHED_SPAN_ONE);
+    assertThat(output.toString()).contains(FINISHED_SPAN_TWO);
+  }
+
+  @Test
+  public void linkForRunningSpansExistInSummaryTable() {
+    OutputStream output = new ByteArrayOutputStream();
+    Span span = tracer.spanBuilder(RUNNING_SPAN_ONE).startSpan();
+    TracezZPageHandler tracezZPageHandler = TracezZPageHandler.create(dataAggregator);
+    Map<String, String> queryMap = Collections.emptyMap();
+    tracezZPageHandler.emitHtml(queryMap, output);
+    assertThat(output.toString())
+        .contains("href=\"?zspanname=" + RUNNING_SPAN_ONE + "&ztype=0&zsubtype=0\"");
+    span.end();
   }
 }
