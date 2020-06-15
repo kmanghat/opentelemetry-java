@@ -61,19 +61,18 @@ public final class TracezDataAggregatorTest {
 
   @Test
   public void getSpanNames_twoSpanNames() {
-    /* getSpanNames should return a set with 2 span names */
     Span span1 = tracer.spanBuilder(SPAN_NAME_ONE).startSpan();
     Span span2 = tracer.spanBuilder(SPAN_NAME_TWO).startSpan();
     Span span3 = tracer.spanBuilder(SPAN_NAME_TWO).startSpan();
+    /* getSpanNames should return a set with 2 span names */
     Set<String> names = dataAggregator.getSpanNames();
     assertThat(names.size()).isEqualTo(2);
     assertThat(names).contains(SPAN_NAME_ONE);
     assertThat(names).contains(SPAN_NAME_TWO);
-
-    /* getSpanNames should still return a set with 2 span names */
     span1.end();
     span2.end();
     span3.end();
+    /* getSpanNames should still return a set with 2 span names */
     names = dataAggregator.getSpanNames();
     assertThat(names.size()).isEqualTo(2);
     assertThat(names).contains(SPAN_NAME_ONE);
@@ -283,7 +282,7 @@ public final class TracezDataAggregatorTest {
         span.end();
       }
     }
-    /* getErrorSpanCounts should be storing CanonicalCode.values().length - 1 spans because every
+    /* getErrorSpanCounts should return a map with CanonicalCode.values().length - 1 spans, as every
     code, expect OK, represents an error */
     Map<String, Integer> errorCounts = dataAggregator.getErrorSpanCounts();
     assertThat(errorCounts.size()).isEqualTo(1);
