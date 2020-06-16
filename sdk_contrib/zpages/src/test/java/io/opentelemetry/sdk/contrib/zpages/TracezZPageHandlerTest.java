@@ -52,7 +52,7 @@ public final class TracezZPageHandlerTest {
   }
 
   @Test
-  public void emitSummaryTableForEachSpan() {
+  public void summaryTable_emitRowForEachSpan() {
     OutputStream output = new ByteArrayOutputStream();
     Span span1 = tracer.spanBuilder(FINISHED_SPAN_ONE).startSpan();
     Span span2 = tracer.spanBuilder(FINISHED_SPAN_TWO).startSpan();
@@ -67,7 +67,7 @@ public final class TracezZPageHandlerTest {
   }
 
   @Test
-  public void linkForRunningSpansInSummaryTable() {
+  public void summaryTable_linkForRunningSpans() {
     OutputStream output = new ByteArrayOutputStream();
     Span runningSpan1 = tracer.spanBuilder(RUNNING_SPAN).startSpan();
     Span runningSpan2 = tracer.spanBuilder(RUNNING_SPAN).startSpan();
