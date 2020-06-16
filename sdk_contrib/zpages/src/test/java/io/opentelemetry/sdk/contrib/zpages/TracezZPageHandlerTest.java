@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import io.opentelemetry.sdk.internal.TestClock;
 import io.opentelemetry.sdk.trace.TracerSdkProvider;
+import io.opentelemetry.trace.EndSpanOptions;
 import io.opentelemetry.trace.Span;
 import io.opentelemetry.trace.Tracer;
 import java.io.ByteArrayOutputStream;
@@ -43,7 +44,8 @@ public final class TracezZPageHandlerTest {
   private final TracezDataAggregator dataAggregator = new TracezDataAggregator(spanProcessor);
   private static final String FINISHED_SPAN_ONE = "FinishedSpanOne";
   private static final String FINISHED_SPAN_TWO = "FinishedSpanTwo";
-  private static final String RUNNING_SPAN = "RunningSpanOne";
+  private static final String RUNNING_SPAN = "RunningSpan";
+  private static final String LATENCY_SPAN = "LatencySpan";
 
   @Before
   public void setup() {
@@ -78,7 +80,7 @@ public final class TracezZPageHandlerTest {
     Map<String, String> queryMap = Collections.emptyMap();
     tracezZPageHandler.emitHtml(queryMap, output);
 
-    // link for running span with 3 running
+    // Link for running span with 3 running
     assertThat(output.toString())
         .contains("href=\"?zspanname=" + RUNNING_SPAN + "&ztype=0&zsubtype=0\">3");
     // No link for finished spans
@@ -88,5 +90,77 @@ public final class TracezZPageHandlerTest {
     runningSpan1.end();
     runningSpan2.end();
     runningSpan3.end();
+  }
+
+  @Test
+  public void summaryTable_linkForLatencyBasedSpan_OnePerBoundary() {
+    OutputStream output = new ByteArrayOutputStream();
+    // Boundary 0, >1us
+    Span latencySpanSubtype0 = tracer.spanBuilder(LATENCY_SPAN).setStartTimestamp(1L).startSpan();
+    EndSpanOptions endOptions0 = EndSpanOptions.builder().setEndTimestamp(1002L).build();
+    latencySpanSubtype0.end(endOptions0);
+    // Boundary 1, >10us
+    Span latencySpanSubtype1 = tracer.spanBuilder(LATENCY_SPAN).setStartTimestamp(1L).startSpan();
+    EndSpanOptions endOptions1 = EndSpanOptions.builder().setEndTimestamp(10002L).build();
+    latencySpanSubtype1.end(endOptions1);
+    // Boundary 2, >100us
+    Span latencySpanSubtype2 = tracer.spanBuilder(LATENCY_SPAN).setStartTimestamp(1L).startSpan();
+    EndSpanOptions endOptions2 = EndSpanOptions.builder().setEndTimestamp(100002L).build();
+    latencySpanSubtype2.end(endOptions2);
+    // Boundary 3, >1ms
+    Span latencySpanSubtype3 = tracer.spanBuilder(LATENCY_SPAN).setStartTimestamp(1L).startSpan();
+    EndSpanOptions endOptions3 = EndSpanOptions.builder().setEndTimestamp(1000002L).build();
+    latencySpanSubtype3.end(endOptions3);
+    // Boundary 4, >10ms
+    Span latencySpanSubtype4 = tracer.spanBuilder(LATENCY_SPAN).setStartTimestamp(1L).startSpan();
+    EndSpanOptions endOptions4 = EndSpanOptions.builder().setEndTimestamp(10000002L).build();
+    latencySpanSubtype4.end(endOptions4);
+    // Boundary 5, >100ms
+    Span latencySpanSubtype5 = tracer.spanBuilder(LATENCY_SPAN).setStartTimestamp(1L).startSpan();
+    EndSpanOptions endOptions5 = EndSpanOptions.builder().setEndTimestamp(100000002L).build();
+    latencySpanSubtype5.end(endOptions5);
+    // Boundary 6, >1s
+    Span latencySpanSubtype6 = tracer.spanBuilder(LATENCY_SPAN).setStartTimestamp(1L).startSpan();
+    EndSpanOptions endOptions6 = EndSpanOptions.builder().setEndTimestamp(1000000002L).build();
+    latencySpanSubtype6.end(endOptions6);
+    // Boundary 7, >10s
+    Span latencySpanSubtype7 = tracer.spanBuilder(LATENCY_SPAN).setStartTimestamp(1L).startSpan();
+    EndSpanOptions endOptions7 = EndSpanOptions.builder().setEndTimestamp(10000000002L).build();
+    latencySpanSubtype7.end(endOptions7);
+    // Boundary 8, >100s
+    Span latencySpanSubtype8 = tracer.spanBuilder(LATENCY_SPAN).setStartTimestamp(1L).startSpan();
+    EndSpanOptions endOptions8 = EndSpanOptions.builder().setEndTimestamp(100000000002L).build();
+    latencySpanSubtype8.end(endOptions8);
+    TracezZPageHandler tracezZPageHandler = TracezZPageHandler.create(dataAggregator);
+    Map<String, String> queryMap = Collections.emptyMap();
+    tracezZPageHandler.emitHtml(queryMap, output);
+
+    // Link for boundary 0
+    assertThat(output.toString())
+        .contains("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=0\">1");
+    // Link for boundary 1
+    assertThat(output.toString())
+        .contains("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=1\">1");
+    // Link for boundary 2
+    assertThat(output.toString())
+        .contains("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=2\">1");
+    // Link for boundary 3
+    assertThat(output.toString())
+        .contains("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=3\">1");
+    // Link for boundary 4
+    assertThat(output.toString())
+        .contains("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=4\">1");
+    // Link for boundary 5
+    assertThat(output.toString())
+        .contains("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=5\">1");
+    // Link for boundary 6
+    assertThat(output.toString())
+        .contains("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=6\">1");
+    // Link for boundary 7
+    assertThat(output.toString())
+        .contains("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=7\">1");
+    // Link for boundary 8
+    assertThat(output.toString())
+        .contains("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=8\">1");
   }
 }
