@@ -182,6 +182,17 @@ public final class TracezDataAggregatorTest {
   }
 
   @Test
+  public void getSpanLatencyCounts_noCompletedSpans() {
+    /* getSpanLatencyCounts should return a an empty map */
+    Span span = tracer.spanBuilder(SPAN_NAME_ONE).startSpan();
+    Map<String, Integer> counts = dataAggregator.getSpanLatencyCounts(0, Long.MAX_VALUE);
+    span.end();
+    assertThat(counts.size()).isEqualTo(0);
+    assertThat(counts.get(SPAN_NAME_ONE)).isNull();
+    assertThat(counts.get(SPAN_NAME_TWO)).isNull();
+  }
+
+  @Test
   public void getSpanLatencyCounts_oneSpanPerLatencyBucket() {
     for (LatencyBoundaries bucket : LatencyBoundaries.values()) {
       Span span = tracer.spanBuilder(SPAN_NAME_ONE).startSpan();
@@ -268,6 +279,18 @@ public final class TracezDataAggregatorTest {
   @Test
   public void getErrorSpanCounts_noSpans() {
     Map<String, Integer> counts = dataAggregator.getErrorSpanCounts();
+    assertThat(counts.size()).isEqualTo(0);
+    assertThat(counts.get(SPAN_NAME_ONE)).isNull();
+    assertThat(counts.get(SPAN_NAME_TWO)).isNull();
+  }
+
+  @Test
+  public void getErrorSpanCounts_noCompletedSpans() {
+    /* getErrorSpanCounts should return a an empty map */
+    Span span = tracer.spanBuilder(SPAN_NAME_ONE).startSpan();
+    Map<String, Integer> counts = dataAggregator.getErrorSpanCounts();
+    span.setStatus(Status.UNKNOWN);
+    span.end();
     assertThat(counts.size()).isEqualTo(0);
     assertThat(counts.get(SPAN_NAME_ONE)).isNull();
     assertThat(counts.get(SPAN_NAME_TWO)).isNull();
