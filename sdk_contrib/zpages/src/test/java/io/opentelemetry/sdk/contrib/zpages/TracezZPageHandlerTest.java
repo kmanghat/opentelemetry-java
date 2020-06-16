@@ -43,7 +43,7 @@ public final class TracezZPageHandlerTest {
   private final TracezDataAggregator dataAggregator = new TracezDataAggregator(spanProcessor);
   private static final String FINISHED_SPAN_ONE = "FinishedSpanOne";
   private static final String FINISHED_SPAN_TWO = "FinishedSpanTwo";
-  private static final String RUNNING_SPAN_ONE = "RunningSpanOne";
+  private static final String RUNNING_SPAN = "RunningSpanOne";
 
   @Before
   public void setup() {
@@ -61,19 +61,32 @@ public final class TracezZPageHandlerTest {
     TracezZPageHandler tracezZPageHandler = TracezZPageHandler.create(dataAggregator);
     Map<String, String> queryMap = Collections.emptyMap();
     tracezZPageHandler.emitHtml(queryMap, output);
+
     assertThat(output.toString()).contains(FINISHED_SPAN_ONE);
     assertThat(output.toString()).contains(FINISHED_SPAN_TWO);
   }
 
   @Test
-  public void linkForRunningSpansExistInSummaryTable() {
+  public void linkForRunningSpansInSummaryTable() {
     OutputStream output = new ByteArrayOutputStream();
-    Span span = tracer.spanBuilder(RUNNING_SPAN_ONE).startSpan();
+    Span runningSpan1 = tracer.spanBuilder(RUNNING_SPAN).startSpan();
+    Span runningSpan2 = tracer.spanBuilder(RUNNING_SPAN).startSpan();
+    Span runningSpan3 = tracer.spanBuilder(RUNNING_SPAN).startSpan();
+    Span finishedSpan = tracer.spanBuilder(FINISHED_SPAN_ONE).startSpan();
+    finishedSpan.end();
     TracezZPageHandler tracezZPageHandler = TracezZPageHandler.create(dataAggregator);
     Map<String, String> queryMap = Collections.emptyMap();
     tracezZPageHandler.emitHtml(queryMap, output);
+
+    // link for running span with 3 running
     assertThat(output.toString())
-        .contains("href=\"?zspanname=" + RUNNING_SPAN_ONE + "&ztype=0&zsubtype=0\"");
-    span.end();
+        .contains("href=\"?zspanname=" + RUNNING_SPAN + "&ztype=0&zsubtype=0\">3");
+    // No link for finished spans
+    assertThat(output.toString())
+        .doesNotContain("href=\"?zspanname=" + FINISHED_SPAN_ONE + "&ztype=0&subtype=0\"");
+
+    runningSpan1.end();
+    runningSpan2.end();
+    runningSpan3.end();
   }
 }
