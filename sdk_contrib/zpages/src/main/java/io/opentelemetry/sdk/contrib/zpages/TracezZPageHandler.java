@@ -18,8 +18,10 @@ package io.opentelemetry.sdk.contrib.zpages;
 
 import com.google.common.base.Charsets;
 import com.google.common.html.HtmlEscapers;
+import com.google.common.io.BaseEncoding;
 import io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator.LatencyBoundaries;
 import io.opentelemetry.sdk.trace.data.SpanData;
+import io.opentelemetry.trace.SpanContext;
 import io.opentelemetry.trace.Status.CanonicalCode;
 import java.io.BufferedWriter;
 import java.io.OutputStream;
@@ -29,6 +31,7 @@ import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.Normalizer.Form;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -38,6 +41,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 final class TracezZPageHandler extends ZPageHandler {
   private enum SampleType {
@@ -74,6 +78,10 @@ final class TracezZPageHandler extends ZPageHandler {
   private static final String TRACEZ_URL = "/tracez";
   // Background color used for zebra striping rows of summary table
   private static final String ZEBRA_STRIPE_COLOR = "#f0f0f0";
+  // Color for sampled traceIds
+  private static final String SAMPLED_TRACE_ID_COLOR = "#C1272D";
+  // Color for not sampled traceIds
+  private static final String NOT_SAMPLED_TRACE_ID_COLOR = "black";
   // Query string parameter name for span name
   private static final String PARAM_SPAN_NAME = "zspanname";
   // Query string parameter name for type to display
@@ -269,7 +277,108 @@ final class TracezZPageHandler extends ZPageHandler {
   }
 
   private static void emitSingleSpan(Formatter formatter, SpanData span) {
-    //
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTimeInMillis(TimeUnit.NANOSECONDS.toMillis(span.getStartEpochNanos()));
+    long startEpochMicros = TimeUnit.NANOSECONDS.toMicros(span.getStartEpochNanos());
+    String elapsedSecondsStr =
+        span.getHasEnded()
+            ? String.format("%13.6f", span.getEndEpochNanos() - span.getStartEpochNanos() * 1.0e-9)
+            : String.format("%13s", " ");
+
+    // START HERE
+    // PROBABLY BEST TO LOOK FOR TO BYTES FUNCTION ONE MORE TIME AND THEN JUST COPY OVER THE MAX SIZE
+
+    // delete this...
+    SpanContext spanContext = span.getContext();
+    //span.getTraceId().copyLowerBase16To();
+    formatter.format(
+        "<b>%04d/%02d/%02d-%02d:%02d:%02d.%06d %s     TraceId: <b style=\"color:%s;\">%s</b> "
+            + "SpanId: %s ParentSpanId: %s</b>%n",
+        calendar.get(Calendar.YEAR),
+        calendar.get(Calendar.MONTH) + 1,
+        calendar.get(Calendar.DAY_OF_MONTH),
+        calendar.get(Calendar.HOUR_OF_DAY),
+        calendar.get(Calendar.MINUTE),
+        calendar.get(Calendar.SECOND),
+        startEpochMicros,
+        elapsedSecondsStr,
+        spanContext.getTraceOptions().isSampled()
+            ? SAMPLED_TRACE_ID_COLOR
+            : NOT_SAMPLED_TRACE_ID_COLOR,
+        BaseEncoding.base16().lowerCase().encode(span.getTraceId().getBytes()),
+        BaseEncoding.base16().lowerCase().encode(spanContext.getSpanId().getBytes()),
+        BaseEncoding.base16()
+            .lowerCase()
+            .encode(
+                span.getParentSpanId() == null
+                    ? SpanId.INVALID.getBytes()
+                    : span.getParentSpanId().getBytes()));
+
+    int lastEntryDayOfYear = calendar.get(Calendar.DAY_OF_YEAR);
+
+    Timestamp lastTimestampNanos = span.getStartTimestamp();
+    TimedEvents<Annotation> annotations = span.getAnnotations();
+    TimedEvents<io.opencensus.trace.NetworkEvent> networkEvents = span.getNetworkEvents();
+    List<TimedEvent<?>> timedEvents = new ArrayList<TimedEvent<?>>(annotations.getEvents());
+    timedEvents.addAll(networkEvents.getEvents());
+    Collections.sort(timedEvents, new TimedEventComparator());
+    for (TimedEvent<?> event : timedEvents) {
+      // Special printing so that durations smaller than one second
+      // are left padded with blanks instead of '0' characters.
+      // E.g.,
+      //        Number                  Printout
+      //        ---------------------------------
+      //        0.000534                  .   534
+      //        1.000534                 1.000534
+      long deltaMicros =
+          TimeUnit.NANOSECONDS.toMicros(
+              durationToNanos(event.getTimestamp().subtractTimestamp(lastTimestampNanos)));
+      String deltaString;
+      if (deltaMicros >= 1000000) {
+        deltaString = String.format("%.6f", (deltaMicros / 1000000.0));
+      } else {
+        deltaString = String.format(".%6d", deltaMicros);
+      }
+
+      calendar.setTimeInMillis(
+          TimeUnit.SECONDS.toMillis(event.getTimestamp().getSeconds())
+              + TimeUnit.NANOSECONDS.toMillis(event.getTimestamp().getNanos()));
+      microsField = TimeUnit.NANOSECONDS.toMicros(event.getTimestamp().getNanos());
+
+      int dayOfYear = calendar.get(Calendar.DAY_OF_YEAR);
+      if (dayOfYear == lastEntryDayOfYear) {
+        formatter.format("%11s", "");
+      } else {
+        formatter.format(
+            "%04d/%02d/%02d-",
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH) + 1,
+            calendar.get(Calendar.DAY_OF_MONTH));
+        lastEntryDayOfYear = dayOfYear;
+      }
+
+      formatter.format(
+          "%02d:%02d:%02d.%06d %13s ... %s%n",
+          calendar.get(Calendar.HOUR_OF_DAY),
+          calendar.get(Calendar.MINUTE),
+          calendar.get(Calendar.SECOND),
+          microsField,
+          deltaString,
+          htmlEscaper()
+              .escape(
+                  event.getEvent() instanceof Annotation
+                      ? renderAnnotation((Annotation) event.getEvent())
+                      : renderNetworkEvents(
+                          (io.opencensus.trace.NetworkEvent) castNonNull(event.getEvent()))));
+      lastTimestampNanos = event.getTimestamp();
+    }
+    Status status = span.getStatus();
+    if (status != null) {
+      formatter.format("%44s %s%n", "", htmlEscaper().escape(renderStatus(status)));
+    }
+    formatter.format(
+        "%44s %s%n",
+        "", htmlEscaper().escape(renderAttributes(span.getAttributes().getAttributeMap())));
   }
 
   /**
