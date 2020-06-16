@@ -76,6 +76,7 @@ public final class TracezZPageHandlerTest {
     Span runningSpan3 = tracer.spanBuilder(RUNNING_SPAN).startSpan();
     Span finishedSpan = tracer.spanBuilder(FINISHED_SPAN_ONE).startSpan();
     finishedSpan.end();
+
     TracezZPageHandler tracezZPageHandler = TracezZPageHandler.create(dataAggregator);
     Map<String, String> queryMap = Collections.emptyMap();
     tracezZPageHandler.emitHtml(queryMap, output);
@@ -131,6 +132,7 @@ public final class TracezZPageHandlerTest {
     Span latencySpanSubtype8 = tracer.spanBuilder(LATENCY_SPAN).setStartTimestamp(1L).startSpan();
     EndSpanOptions endOptions8 = EndSpanOptions.builder().setEndTimestamp(100000000002L).build();
     latencySpanSubtype8.end(endOptions8);
+
     TracezZPageHandler tracezZPageHandler = TracezZPageHandler.create(dataAggregator);
     Map<String, String> queryMap = Collections.emptyMap();
     tracezZPageHandler.emitHtml(queryMap, output);
@@ -162,5 +164,31 @@ public final class TracezZPageHandlerTest {
     // Link for boundary 8
     assertThat(output.toString())
         .contains("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=8\">1");
+  }
+
+  @Test
+  public void summaryTable_linkForLatencyBasedSpan_MultipleForOneBoundary() {
+    OutputStream output = new ByteArrayOutputStream();
+    // 4 samples in boundary 5, >100ms
+    Span latencySpan100ms1 = tracer.spanBuilder(LATENCY_SPAN).setStartTimestamp(1L).startSpan();
+    EndSpanOptions endOptions1 = EndSpanOptions.builder().setEndTimestamp(112931232L).build();
+    latencySpan100ms1.end(endOptions1);
+    Span latencySpan100ms2 = tracer.spanBuilder(LATENCY_SPAN).setStartTimestamp(1L).startSpan();
+    EndSpanOptions endOptions2 = EndSpanOptions.builder().setEndTimestamp(138694322L).build();
+    latencySpan100ms2.end(endOptions2);
+    Span latencySpan100ms3 = tracer.spanBuilder(LATENCY_SPAN).setStartTimestamp(1L).startSpan();
+    EndSpanOptions endOptions3 = EndSpanOptions.builder().setEndTimestamp(154486482L).build();
+    latencySpan100ms3.end(endOptions3);
+    Span latencySpan100ms4 = tracer.spanBuilder(LATENCY_SPAN).setStartTimestamp(1L).startSpan();
+    EndSpanOptions endOptions4 = EndSpanOptions.builder().setEndTimestamp(194892582L).build();
+    latencySpan100ms4.end(endOptions4);
+
+    TracezZPageHandler tracezZPageHandler = TracezZPageHandler.create(dataAggregator);
+    Map<String, String> queryMap = Collections.emptyMap();
+    tracezZPageHandler.emitHtml(queryMap, output);
+
+    // Link for boundary 5 with 4 samples
+    assertThat(output.toString())
+        .contains("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=5\">4");
   }
 }
