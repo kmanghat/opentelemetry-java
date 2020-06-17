@@ -22,6 +22,7 @@ import io.opentelemetry.sdk.internal.TestClock;
 import io.opentelemetry.sdk.trace.TracerSdkProvider;
 import io.opentelemetry.trace.EndSpanOptions;
 import io.opentelemetry.trace.Span;
+import io.opentelemetry.trace.Status.CanonicalCode;
 import io.opentelemetry.trace.Tracer;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
@@ -46,6 +47,7 @@ public final class TracezZPageHandlerTest {
   private static final String FINISHED_SPAN_TWO = "FinishedSpanTwo";
   private static final String RUNNING_SPAN = "RunningSpan";
   private static final String LATENCY_SPAN = "LatencySpan";
+  private static final String ERROR_SPAN = "ErrorSpan";
 
   @Before
   public void setup() {
@@ -56,16 +58,33 @@ public final class TracezZPageHandlerTest {
   @Test
   public void summaryTable_emitRowForEachSpan() {
     OutputStream output = new ByteArrayOutputStream();
-    Span span1 = tracer.spanBuilder(FINISHED_SPAN_ONE).startSpan();
-    Span span2 = tracer.spanBuilder(FINISHED_SPAN_TWO).startSpan();
-    span1.end();
-    span2.end();
+    Span finishedSpan1 = tracer.spanBuilder(FINISHED_SPAN_ONE).startSpan();
+    Span finishedSpan2 = tracer.spanBuilder(FINISHED_SPAN_TWO).startSpan();
+    finishedSpan1.end();
+    finishedSpan2.end();
+
+    Span runningSpan = tracer.spanBuilder(RUNNING_SPAN).startSpan();
+
+    Span latencySpan = tracer.spanBuilder(LATENCY_SPAN).setStartTimestamp(1L).startSpan();
+    EndSpanOptions endOptions = EndSpanOptions.builder().setEndTimestamp(10002L).build();
+    latencySpan.end(endOptions);
+
+    Span errorSpan = tracer.spanBuilder(ERROR_SPAN).startSpan();
+    errorSpan.setStatus(CanonicalCode.INVALID_ARGUMENT.toStatus());
+    errorSpan.end();
+    
     TracezZPageHandler tracezZPageHandler = TracezZPageHandler.create(dataAggregator);
     Map<String, String> queryMap = Collections.emptyMap();
     tracezZPageHandler.emitHtml(queryMap, output);
 
+    // Emit a row for all types of spans
     assertThat(output.toString()).contains(FINISHED_SPAN_ONE);
     assertThat(output.toString()).contains(FINISHED_SPAN_TWO);
+    assertThat(output.toString()).contains(RUNNING_SPAN);
+    assertThat(output.toString()).contains(LATENCY_SPAN);
+    assertThat(output.toString()).contains(ERROR_SPAN);
+
+    runningSpan.end();
   }
 
   @Test
@@ -226,5 +245,32 @@ public final class TracezZPageHandlerTest {
     // Link for boundary 5 with 4 samples
     assertThat(output.toString())
         .contains("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=5\">4");
+  }
+
+  @Test
+  public void summaryTable_linkForErrorSpans() {
+    OutputStream output = new ByteArrayOutputStream();
+    Span errorSpan1 = tracer.spanBuilder(ERROR_SPAN).startSpan();
+    Span errorSpan2 = tracer.spanBuilder(ERROR_SPAN).startSpan();
+    Span errorSpan3 = tracer.spanBuilder(ERROR_SPAN).startSpan();
+    Span finishedSpan = tracer.spanBuilder(FINISHED_SPAN_ONE).startSpan();
+    errorSpan1.setStatus(CanonicalCode.CANCELLED.toStatus());
+    errorSpan2.setStatus(CanonicalCode.ABORTED.toStatus());
+    errorSpan3.setStatus(CanonicalCode.DEADLINE_EXCEEDED.toStatus());
+    errorSpan1.end();
+    errorSpan2.end();
+    errorSpan3.end();
+    finishedSpan.end();
+
+    TracezZPageHandler tracezZPageHandler = TracezZPageHandler.create(dataAggregator);
+    Map<String, String> queryMap = Collections.emptyMap();
+    tracezZPageHandler.emitHtml(queryMap, output);
+
+    // Link for error based spans with 3 samples
+    assertThat(output.toString())
+        .contains("href=\"?zspanname=" + ERROR_SPAN + "&ztype=2&zsubtype=0\">3");
+    // No link for Status{#OK} spans
+    assertThat(output.toString())
+        .doesNotContain("href=\"?zspanname=" + FINISHED_SPAN_ONE + "&ztype=2&subtype=0\"");
   }
 }

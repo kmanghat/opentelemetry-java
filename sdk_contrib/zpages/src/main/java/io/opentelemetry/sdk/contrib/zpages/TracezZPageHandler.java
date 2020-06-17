@@ -205,7 +205,7 @@ final class TracezZPageHandler extends ZPageHandler {
     Map<String, Integer> runningSpanCounts = dataAggregator.getRunningSpanCounts();
     Map<String, Map<LatencyBoundaries, Integer>> latencySpanCounts =
         dataAggregator.getSpanLatencyCounts();
-    // Map<String, Integer> errorSpanCounts = dataAggregator.getErrorSpanCounts();
+    Map<String, Integer> errorSpanCounts = dataAggregator.getErrorSpanCounts();
     for (String spanName : spanNames) {
       if (zebraStripe) {
         formatter.format("<tr style=\"background-color: %s\">", ZEBRA_STRIPE_COLOR);
@@ -237,8 +237,10 @@ final class TracezZPageHandler extends ZPageHandler {
       }
 
       // Error based sampled spans column
-      // int numOfErrorSamples = errorSpanCounts.containsKey(spanName) ?
-      // errorSpanCounts.get(spanName) : 0;
+      int numOfErrorSamples =
+          errorSpanCounts.containsKey(spanName) ? errorSpanCounts.get(spanName) : 0;
+      // subtype 0 means all errors
+      emitSummaryTableCell(out, formatter, spanName, numOfErrorSamples, SampleType.ERROR, 0);
     }
   }
 
