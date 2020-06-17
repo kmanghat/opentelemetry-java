@@ -94,7 +94,7 @@ public final class TracezZPageHandlerTest {
   }
 
   @Test
-  public void summaryTable_linkForLatencyBasedSpan_NoneForEmptyBoundary() {
+  public void summaryTable_linkForLatencyBasedSpans_NoneForEmptyBoundary() {
     OutputStream output = new ByteArrayOutputStream();
     TracezZPageHandler tracezZPageHandler = TracezZPageHandler.create(dataAggregator);
     Map<String, String> queryMap = Collections.emptyMap();
@@ -130,7 +130,7 @@ public final class TracezZPageHandlerTest {
   }
 
   @Test
-  public void summaryTable_linkForLatencyBasedSpan_OnePerBoundary() {
+  public void summaryTable_linkForLatencyBasedSpans_OnePerBoundary() {
     OutputStream output = new ByteArrayOutputStream();
     // Boundary 0, >1us
     Span latencySpanSubtype0 = tracer.spanBuilder(LATENCY_SPAN).setStartTimestamp(1L).startSpan();
@@ -203,7 +203,7 @@ public final class TracezZPageHandlerTest {
   }
 
   @Test
-  public void summaryTable_linkForLatencyBasedSpan_MultipleForOneBoundary() {
+  public void summaryTable_linkForLatencyBasedSpans_MultipleForOneBoundary() {
     OutputStream output = new ByteArrayOutputStream();
     // 4 samples in boundary 5, >100ms
     Span latencySpan100ms1 = tracer.spanBuilder(LATENCY_SPAN).setStartTimestamp(1L).startSpan();
