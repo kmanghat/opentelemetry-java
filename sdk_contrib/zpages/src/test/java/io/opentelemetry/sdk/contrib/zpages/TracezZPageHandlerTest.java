@@ -72,7 +72,7 @@ public final class TracezZPageHandlerTest {
     Span errorSpan = tracer.spanBuilder(ERROR_SPAN).startSpan();
     errorSpan.setStatus(CanonicalCode.INVALID_ARGUMENT.toStatus());
     errorSpan.end();
-    
+
     TracezZPageHandler tracezZPageHandler = TracezZPageHandler.create(dataAggregator);
     Map<String, String> queryMap = Collections.emptyMap();
     tracezZPageHandler.emitHtml(queryMap, output);

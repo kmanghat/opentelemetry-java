@@ -136,11 +136,11 @@ final class TracezZPageHandler extends ZPageHandler {
     out.write("<tr class=\"bg-color\">");
     out.write("<th colspan=1></th>");
     out.write("<th colspan=1 class=\"border-left-white\"></th>");
-    for (LatencyBoundaries lbs : LatencyBoundaries.values()) {
+    for (LatencyBoundaries latencyBoundaries : LatencyBoundaries.values()) {
       formatter.format(
           "<th colspan=1 class=\"border-left-white align-center\""
               + "style=\"color: #fff;\"><b>[%s]</b></th>",
-          LATENCY_BOUNDARIES_STRING_MAP.get(lbs));
+          LATENCY_BOUNDARIES_STRING_MAP.get(latencyBoundaries));
     }
     out.write("<th colspan=1 class=\"border-left-white\"></th>");
     out.write("</tr>");
@@ -223,17 +223,16 @@ final class TracezZPageHandler extends ZPageHandler {
 
       // Latency based sampled spans column
       int subtype = 0;
-      for (LatencyBoundaries lbs : LatencyBoundaries.values()) {
-        if (latencySpanCounts.containsKey(spanName)) {
-          int numOfLatencySamples =
-              latencySpanCounts.get(spanName).containsKey(lbs)
-                  ? latencySpanCounts.get(spanName).get(lbs)
-                  : 0;
-          emitSummaryTableCell(
-              out, formatter, spanName, numOfLatencySamples, SampleType.LATENCY, subtype++);
-        } else {
-          emitSummaryTableCell(out, formatter, spanName, 0, SampleType.LATENCY, subtype++);
-        }
+      for (LatencyBoundaries latencyBoundaries : LatencyBoundaries.values()) {
+        int numOfLatencySamples =
+            latencySpanCounts.containsKey(spanName)
+                ? latencySpanCounts.get(spanName).containsKey(latencyBoundaries)
+                    ? latencySpanCounts.get(spanName).get(latencyBoundaries)
+                    : 0
+                : 0;
+        emitSummaryTableCell(
+            out, formatter, spanName, numOfLatencySamples, SampleType.LATENCY, subtype);
+        subtype += 1;
       }
 
       // Error based sampled spans column
@@ -358,8 +357,8 @@ final class TracezZPageHandler extends ZPageHandler {
     out.close();
   }
 
-  private static String latencyBoundariesToString(LatencyBoundaries lb) {
-    switch (lb) {
+  private static String latencyBoundariesToString(LatencyBoundaries latencyBoundaries) {
+    switch (latencyBoundaries) {
       case ZERO_MICROSx10:
         return ">0us";
       case MICROSx10_MICROSx100:
@@ -379,15 +378,15 @@ final class TracezZPageHandler extends ZPageHandler {
       case SECONDx100_MAX:
         return ">100s";
     }
-    throw new IllegalArgumentException("No value string available for: " + lb);
+    throw new IllegalArgumentException("No value string available for: " + latencyBoundaries);
   }
 
   private static Map<LatencyBoundaries, String> buildLatencyBoundariesStringMap() {
-    Map<LatencyBoundaries, String> lbsMap = new HashMap<>();
-    for (LatencyBoundaries lb : LatencyBoundaries.values()) {
-      lbsMap.put(lb, latencyBoundariesToString(lb));
+    Map<LatencyBoundaries, String> latencyBoundariesMap = new HashMap<>();
+    for (LatencyBoundaries latencyBoundaries : LatencyBoundaries.values()) {
+      latencyBoundariesMap.put(latencyBoundaries, latencyBoundariesToString(latencyBoundaries));
     }
-    return Collections.unmodifiableMap(lbsMap);
+    return Collections.unmodifiableMap(latencyBoundariesMap);
   }
 
   private static final class SpanDataComparator implements Comparator<SpanData>, Serializable {
