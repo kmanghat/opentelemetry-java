@@ -94,6 +94,42 @@ public final class TracezZPageHandlerTest {
   }
 
   @Test
+  public void summaryTable_linkForLatencyBasedSpan_NoneForEmptyBoundary() {
+    OutputStream output = new ByteArrayOutputStream();
+    TracezZPageHandler tracezZPageHandler = TracezZPageHandler.create(dataAggregator);
+    Map<String, String> queryMap = Collections.emptyMap();
+    tracezZPageHandler.emitHtml(queryMap, output);
+
+    // No link for boundary 0
+    assertThat(output.toString())
+        .doesNotContain("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=0\"");
+    // No link for boundary 1
+    assertThat(output.toString())
+        .doesNotContain("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=1\"");
+    // No link for boundary 2
+    assertThat(output.toString())
+        .doesNotContain("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=2\"");
+    // No link for boundary 3
+    assertThat(output.toString())
+        .doesNotContain("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=3\"");
+    // No link for boundary 4
+    assertThat(output.toString())
+        .doesNotContain("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=4\"");
+    // No link for boundary 5
+    assertThat(output.toString())
+        .doesNotContain("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=5\"");
+    // No link for boundary 6
+    assertThat(output.toString())
+        .doesNotContain("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=6\"");
+    // No link for boundary 7
+    assertThat(output.toString())
+        .doesNotContain("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=7\"");
+    // No link for boundary 8
+    assertThat(output.toString())
+        .doesNotContain("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=8\">1");
+  }
+
+  @Test
   public void summaryTable_linkForLatencyBasedSpan_OnePerBoundary() {
     OutputStream output = new ByteArrayOutputStream();
     // Boundary 0, >1us
