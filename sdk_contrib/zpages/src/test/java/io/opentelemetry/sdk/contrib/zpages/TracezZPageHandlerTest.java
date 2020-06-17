@@ -126,7 +126,7 @@ public final class TracezZPageHandlerTest {
         .doesNotContain("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=7\"");
     // No link for boundary 8
     assertThat(output.toString())
-        .doesNotContain("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=8\">1");
+        .doesNotContain("href=\"?zspanname=" + LATENCY_SPAN + "&ztype=1&zsubtype=8\"");
   }
 
   @Test
