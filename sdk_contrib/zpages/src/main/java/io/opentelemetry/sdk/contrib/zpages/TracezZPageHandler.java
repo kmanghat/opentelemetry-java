@@ -226,9 +226,8 @@ final class TracezZPageHandler extends ZPageHandler {
       for (LatencyBoundaries latencyBoundaries : LatencyBoundaries.values()) {
         int numOfLatencySamples =
             latencySpanCounts.containsKey(spanName)
-                ? latencySpanCounts.get(spanName).containsKey(latencyBoundaries)
-                    ? latencySpanCounts.get(spanName).get(latencyBoundaries)
-                    : 0
+                    && latencySpanCounts.get(spanName).containsKey(latencyBoundaries)
+                ? latencySpanCounts.get(spanName).get(latencyBoundaries)
                 : 0;
         emitSummaryTableCell(
             out, formatter, spanName, numOfLatencySamples, SampleType.LATENCY, subtype);
