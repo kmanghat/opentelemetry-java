@@ -16,12 +16,15 @@
 
 package io.opentelemetry.sdk.contrib.zpages;
 
+import static com.google.common.html.HtmlEscapers.htmlEscaper;
+
 import com.google.common.base.Charsets;
-import com.google.common.html.HtmlEscapers;
-import com.google.common.io.BaseEncoding;
+import io.opentelemetry.common.AttributeValue;
 import io.opentelemetry.sdk.contrib.zpages.TracezDataAggregator.LatencyBoundaries;
 import io.opentelemetry.sdk.trace.data.SpanData;
-import io.opentelemetry.trace.SpanContext;
+import io.opentelemetry.sdk.trace.data.SpanData.Event;
+import io.opentelemetry.trace.SpanId;
+import io.opentelemetry.trace.Status;
 import io.opentelemetry.trace.Status.CanonicalCode;
 import java.io.BufferedWriter;
 import java.io.OutputStream;
@@ -30,7 +33,6 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.text.Normalizer.Form;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
@@ -223,7 +225,7 @@ final class TracezZPageHandler extends ZPageHandler {
         out.write("<tr>");
       }
       zebraStripe = !zebraStripe;
-      formatter.format("<td>%s</td>", HtmlEscapers.htmlEscaper().escape(spanName));
+      formatter.format("<td>%s</td>", htmlEscaper().escape(spanName));
 
       // Running spans column
       int numOfRunningSpans =
@@ -255,8 +257,7 @@ final class TracezZPageHandler extends ZPageHandler {
   private static void emitSpanNameAndCount(
       Formatter formatter, String spanName, int count, SampleType type) {
     formatter.format(
-        "<p class=\"align-center\"><b> Span Name: %s </b></p>",
-        HtmlEscapers.htmlEscaper().escape(spanName));
+        "<p class=\"align-center\"><b> Span Name: %s </b></p>", htmlEscaper().escape(spanName));
     formatter.format(
         "<p class=\"align-center\"><b> Number of %s: %d </b></p>",
         type == SampleType.RUNNING
@@ -279,18 +280,13 @@ final class TracezZPageHandler extends ZPageHandler {
   private static void emitSingleSpan(Formatter formatter, SpanData span) {
     Calendar calendar = Calendar.getInstance();
     calendar.setTimeInMillis(TimeUnit.NANOSECONDS.toMillis(span.getStartEpochNanos()));
-    long startEpochMicros = TimeUnit.NANOSECONDS.toMicros(span.getStartEpochNanos());
+    long microsField = TimeUnit.NANOSECONDS.toMicros(span.getStartEpochNanos());
     String elapsedSecondsStr =
         span.getHasEnded()
-            ? String.format("%13.6f", span.getEndEpochNanos() - span.getStartEpochNanos() * 1.0e-9)
+            ? String.format(
+                "%13.6f", (span.getEndEpochNanos() - span.getStartEpochNanos()) * 1.0e-9)
             : String.format("%13s", " ");
 
-    // START HERE
-    // PROBABLY BEST TO LOOK FOR TO BYTES FUNCTION ONE MORE TIME AND THEN JUST COPY OVER THE MAX SIZE
-
-    // delete this...
-    SpanContext spanContext = span.getContext();
-    //span.getTraceId().copyLowerBase16To();
     formatter.format(
         "<b>%04d/%02d/%02d-%02d:%02d:%02d.%06d %s     TraceId: <b style=\"color:%s;\">%s</b> "
             + "SpanId: %s ParentSpanId: %s</b>%n",
@@ -300,29 +296,21 @@ final class TracezZPageHandler extends ZPageHandler {
         calendar.get(Calendar.HOUR_OF_DAY),
         calendar.get(Calendar.MINUTE),
         calendar.get(Calendar.SECOND),
-        startEpochMicros,
+        microsField,
         elapsedSecondsStr,
-        spanContext.getTraceOptions().isSampled()
-            ? SAMPLED_TRACE_ID_COLOR
-            : NOT_SAMPLED_TRACE_ID_COLOR,
-        BaseEncoding.base16().lowerCase().encode(span.getTraceId().getBytes()),
-        BaseEncoding.base16().lowerCase().encode(spanContext.getSpanId().getBytes()),
-        BaseEncoding.base16()
-            .lowerCase()
-            .encode(
-                span.getParentSpanId() == null
-                    ? SpanId.INVALID.getBytes()
-                    : span.getParentSpanId().getBytes()));
+        span.getTraceFlags().isSampled() ? SAMPLED_TRACE_ID_COLOR : NOT_SAMPLED_TRACE_ID_COLOR,
+        span.getTraceId().toLowerBase16(),
+        span.getSpanId().toLowerBase16(),
+        (span.getParentSpanId() == null
+            ? SpanId.getInvalid().toLowerBase16()
+            : span.getParentSpanId().toLowerBase16()));
 
     int lastEntryDayOfYear = calendar.get(Calendar.DAY_OF_YEAR);
 
-    Timestamp lastTimestampNanos = span.getStartTimestamp();
-    TimedEvents<Annotation> annotations = span.getAnnotations();
-    TimedEvents<io.opencensus.trace.NetworkEvent> networkEvents = span.getNetworkEvents();
-    List<TimedEvent<?>> timedEvents = new ArrayList<TimedEvent<?>>(annotations.getEvents());
-    timedEvents.addAll(networkEvents.getEvents());
-    Collections.sort(timedEvents, new TimedEventComparator());
-    for (TimedEvent<?> event : timedEvents) {
+    long lastEpochNanos = span.getStartEpochNanos();
+    List<Event> timedEvents = span.getEvents();
+    Collections.sort(timedEvents, new EventComparator());
+    for (Event event : timedEvents) {
       // Special printing so that durations smaller than one second
       // are left padded with blanks instead of '0' characters.
       // E.g.,
@@ -330,9 +318,7 @@ final class TracezZPageHandler extends ZPageHandler {
       //        ---------------------------------
       //        0.000534                  .   534
       //        1.000534                 1.000534
-      long deltaMicros =
-          TimeUnit.NANOSECONDS.toMicros(
-              durationToNanos(event.getTimestamp().subtractTimestamp(lastTimestampNanos)));
+      long deltaMicros = TimeUnit.NANOSECONDS.toMicros(event.getEpochNanos() - lastEpochNanos);
       String deltaString;
       if (deltaMicros >= 1000000) {
         deltaString = String.format("%.6f", (deltaMicros / 1000000.0));
@@ -340,10 +326,8 @@ final class TracezZPageHandler extends ZPageHandler {
         deltaString = String.format(".%6d", deltaMicros);
       }
 
-      calendar.setTimeInMillis(
-          TimeUnit.SECONDS.toMillis(event.getTimestamp().getSeconds())
-              + TimeUnit.NANOSECONDS.toMillis(event.getTimestamp().getNanos()));
-      microsField = TimeUnit.NANOSECONDS.toMicros(event.getTimestamp().getNanos());
+      calendar.setTimeInMillis(TimeUnit.NANOSECONDS.toMillis(event.getEpochNanos()));
+      microsField = TimeUnit.NANOSECONDS.toMicros(event.getEpochNanos());
 
       int dayOfYear = calendar.get(Calendar.DAY_OF_YEAR);
       if (dayOfYear == lastEntryDayOfYear) {
@@ -364,13 +348,9 @@ final class TracezZPageHandler extends ZPageHandler {
           calendar.get(Calendar.SECOND),
           microsField,
           deltaString,
-          htmlEscaper()
-              .escape(
-                  event.getEvent() instanceof Annotation
-                      ? renderAnnotation((Annotation) event.getEvent())
-                      : renderNetworkEvents(
-                          (io.opencensus.trace.NetworkEvent) castNonNull(event.getEvent()))));
-      lastTimestampNanos = event.getTimestamp();
+          htmlEscaper().escape(renderEvent(event)));
+
+      lastEpochNanos = event.getEpochNanos();
     }
     Status status = span.getStatus();
     if (status != null) {
@@ -378,7 +358,39 @@ final class TracezZPageHandler extends ZPageHandler {
     }
     formatter.format(
         "%44s %s%n",
-        "", htmlEscaper().escape(renderAttributes(span.getAttributes().getAttributeMap())));
+        "", htmlEscaper().escape(renderAttributes(span.getResource().getAttributes())));
+  }
+
+  private static String renderStatus(Status status) {
+    return status.toString();
+  }
+
+  private static String renderAttributes(Map<String, AttributeValue> attributes) {
+    StringBuilder stringBuilder = new StringBuilder();
+    stringBuilder.append("Attributes:{");
+    boolean first = true;
+    for (Map.Entry<String, AttributeValue> entry : attributes.entrySet()) {
+      if (first) {
+        first = false;
+      } else {
+        stringBuilder.append(", ");
+      }
+      stringBuilder.append(entry.getKey());
+      stringBuilder.append("=");
+      stringBuilder.append(entry.getValue().toString());
+    }
+    stringBuilder.append("}");
+    return stringBuilder.toString();
+  }
+
+  private static String renderEvent(Event event) {
+    StringBuilder stringBuilder = new StringBuilder();
+    stringBuilder.append(event.getName());
+    if (!event.getAttributes().isEmpty()) {
+      stringBuilder.append(" ");
+      stringBuilder.append(renderAttributes(event.getAttributes()));
+    }
+    return stringBuilder.toString();
   }
 
   /**
@@ -445,7 +457,7 @@ final class TracezZPageHandler extends ZPageHandler {
         emitSpanNameAndCount(formatter, spanName, spans == null ? 0 : spans.size(), type);
 
         if (spans != null) {
-          // emit span details
+          emitSpanDetails(out, formatter, spans);
         }
       }
     }
@@ -514,6 +526,25 @@ final class TracezZPageHandler extends ZPageHandler {
     return Collections.unmodifiableMap(lbsMap);
   }
 
+  private static int compareLongs(long x, long y) {
+    if (x < y) {
+      return -1;
+    } else if (x == y) {
+      return 0;
+    } else {
+      return 1;
+    }
+  }
+
+  private static final class EventComparator implements Comparator<Event>, Serializable {
+    private static final long serialVersionUID = 0;
+
+    @Override
+    public int compare(Event e1, Event e2) {
+      return compareLongs(e1.getEpochNanos(), e2.getEpochNanos());
+    }
+  }
+
   private static final class SpanDataComparator implements Comparator<SpanData>, Serializable {
     private static final long serialVersionUID = 0;
     private final boolean incremental;
@@ -525,16 +556,6 @@ final class TracezZPageHandler extends ZPageHandler {
      */
     private SpanDataComparator(boolean incremental) {
       this.incremental = incremental;
-    }
-
-    private static int compareLongs(long x, long y) {
-      if (x < y) {
-        return -1;
-      } else if (x == y) {
-        return 0;
-      } else {
-        return 1;
-      }
     }
 
     @Override
