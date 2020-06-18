@@ -29,6 +29,7 @@ import java.util.Map;
 
 /** An {@link HttpHanlder} that will be used to render HTML pages using any {@code ZPageHandler}. */
 final class ZPageHttpHandler implements HttpHandler {
+  // The corresponding ZPageHandler for the zPage (e.g. TracezZPageHandler)
   private final ZPageHandler zpageHandler;
 
   /** Constructs a new {@code ZPageHttpHandler}. */
