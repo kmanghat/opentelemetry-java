@@ -45,14 +45,14 @@ final class ZPageHttpHandler implements HttpHandler {
     }
     Map<String, String> queryMap = new HashMap<String, String>();
     for (String param : Splitter.on("&").split(queryStrings)) {
-      List<String> splits = Splitter.on("=").splitToList(param);
-      if (splits.size() > 1) {
-        queryMap.put(splits.get(0), splits.get(1));
+      List<String> keyValuePair = Splitter.on("=").splitToList(param);
+      if (keyValuePair.size() > 1) {
+        queryMap.put(keyValuePair.get(0), keyValuePair.get(1));
       } else {
-        queryMap.put(splits.get(0), "");
+        queryMap.put(keyValuePair.get(0), "");
       }
     }
-    return Collections.unmodifiableMap(queryMap);
+    return Collections.unmodifiableMap(new HashMap<>(queryMap));
   }
 
   @Override
