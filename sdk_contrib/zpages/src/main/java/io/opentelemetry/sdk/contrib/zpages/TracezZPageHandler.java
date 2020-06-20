@@ -385,7 +385,7 @@ final class TracezZPageHandler extends ZPageHandler {
     for (LatencyBoundaries latencyBoundaries : LatencyBoundaries.values()) {
       latencyBoundariesMap.put(latencyBoundaries, latencyBoundariesToString(latencyBoundaries));
     }
-    return Collections.unmodifiableMap(latencyBoundariesMap);
+    return Collections.unmodifiableMap(new HashMap<>(latencyBoundariesMap));
   }
 
   private static final class SpanDataComparator implements Comparator<SpanData>, Serializable {
