@@ -288,8 +288,7 @@ final class TracezZPageHandler extends ZPageHandler {
             : String.format("%13s", " ");
 
     formatter.format(
-        "<b>%04d/%02d/%02d-%02d:%02d:%02d.%06d %s     TraceId: <b style=\"color:%s;\">%s</b> "
-            + "SpanId: %s ParentSpanId: %s</b>%n",
+        "<b>%04d/%02d/%02d-%02d:%02d:%02d.%06d %s",
         calendar.get(Calendar.YEAR),
         calendar.get(Calendar.MONTH) + 1,
         calendar.get(Calendar.DAY_OF_MONTH),
@@ -297,7 +296,10 @@ final class TracezZPageHandler extends ZPageHandler {
         calendar.get(Calendar.MINUTE),
         calendar.get(Calendar.SECOND),
         microsField,
-        elapsedSecondsStr,
+        elapsedSecondsStr);
+
+    formatter.format(
+        "TraceId: <b style=\"color:%s;\">%s</b> " + "SpanId: %s ParentSpanId: %s</b>%n",
         span.getTraceFlags().isSampled() ? SAMPLED_TRACE_ID_COLOR : NOT_SAMPLED_TRACE_ID_COLOR,
         span.getTraceId().toLowerBase16(),
         span.getSpanId().toLowerBase16(),
@@ -311,58 +313,62 @@ final class TracezZPageHandler extends ZPageHandler {
     List<Event> timedEvents = span.getEvents();
     Collections.sort(timedEvents, new EventComparator());
     for (Event event : timedEvents) {
-      // Special printing so that durations smaller than one second
-      // are left padded with blanks instead of '0' characters.
-      // E.g.,
-      //        Number                  Printout
-      //        ---------------------------------
-      //        0.000534                  .   534
-      //        1.000534                 1.000534
-      long deltaMicros = TimeUnit.NANOSECONDS.toMicros(event.getEpochNanos() - lastEpochNanos);
-      String deltaString;
-      if (deltaMicros >= 1000000) {
-        deltaString = String.format("%.6f", (deltaMicros / 1000000.0));
-      } else {
-        deltaString = String.format(".%6d", deltaMicros);
-      }
-
       calendar.setTimeInMillis(TimeUnit.NANOSECONDS.toMillis(event.getEpochNanos()));
-      microsField = TimeUnit.NANOSECONDS.toMicros(event.getEpochNanos());
-
-      int dayOfYear = calendar.get(Calendar.DAY_OF_YEAR);
-      if (dayOfYear == lastEntryDayOfYear) {
-        formatter.format("%11s", "");
-      } else {
-        formatter.format(
-            "%04d/%02d/%02d-",
-            calendar.get(Calendar.YEAR),
-            calendar.get(Calendar.MONTH) + 1,
-            calendar.get(Calendar.DAY_OF_MONTH));
-        lastEntryDayOfYear = dayOfYear;
+      emitSingleEvent(formatter, event, calendar, lastEntryDayOfYear, lastEpochNanos);
+      if (calendar.get(Calendar.DAY_OF_YEAR) != lastEntryDayOfYear) {
+        lastEntryDayOfYear = calendar.get(Calendar.DAY_OF_YEAR);
       }
-
-      formatter.format(
-          "%02d:%02d:%02d.%06d %13s ... %s%n",
-          calendar.get(Calendar.HOUR_OF_DAY),
-          calendar.get(Calendar.MINUTE),
-          calendar.get(Calendar.SECOND),
-          microsField,
-          deltaString,
-          htmlEscaper().escape(renderEvent(event)));
-
       lastEpochNanos = event.getEpochNanos();
     }
     Status status = span.getStatus();
     if (status != null) {
-      formatter.format("%44s %s%n", "", htmlEscaper().escape(renderStatus(status)));
+      formatter.format("%44s %s%n", "", htmlEscaper().escape(status.toString()));
     }
     formatter.format(
         "%44s %s%n",
         "", htmlEscaper().escape(renderAttributes(span.getResource().getAttributes())));
   }
 
-  private static String renderStatus(Status status) {
-    return status.toString();
+  private static void emitSingleEvent(
+      Formatter formatter,
+      Event event,
+      Calendar calendar,
+      int lastEntryDayOfYear,
+      long lastEpochNanos) {
+    if (calendar.get(Calendar.DAY_OF_YEAR) == lastEntryDayOfYear) {
+      formatter.format("%11s", "");
+    } else {
+      formatter.format(
+          "%04d/%02d/%02d-",
+          calendar.get(Calendar.YEAR),
+          calendar.get(Calendar.MONTH) + 1,
+          calendar.get(Calendar.DAY_OF_MONTH));
+    }
+
+    // Special printing so that durations smaller than one second
+    // are left padded with blanks instead of '0' characters.
+    // E.g.,
+    //        Number                  Printout
+    //        ---------------------------------
+    //        0.000534                  .   534
+    //        1.000534                 1.000534
+    long deltaMicros = TimeUnit.NANOSECONDS.toMicros(event.getEpochNanos() - lastEpochNanos);
+    String deltaString;
+    if (deltaMicros >= 1000000) {
+      deltaString = String.format("%.6f", (deltaMicros / 1000000.0));
+    } else {
+      deltaString = String.format(".%6d", deltaMicros);
+    }
+
+    long microsField = TimeUnit.NANOSECONDS.toMicros(event.getEpochNanos());
+    formatter.format(
+        "%02d:%02d:%02d.%06d %13s ... %s%n",
+        calendar.get(Calendar.HOUR_OF_DAY),
+        calendar.get(Calendar.MINUTE),
+        calendar.get(Calendar.SECOND),
+        microsField,
+        deltaString,
+        htmlEscaper().escape(renderEvent(event)));
   }
 
   private static String renderAttributes(Map<String, AttributeValue> attributes) {
@@ -526,22 +532,12 @@ final class TracezZPageHandler extends ZPageHandler {
     return Collections.unmodifiableMap(latencyBoundariesMap);
   }
 
-  private static int compareLongs(long x, long y) {
-    if (x < y) {
-      return -1;
-    } else if (x == y) {
-      return 0;
-    } else {
-      return 1;
-    }
-  }
-
   private static final class EventComparator implements Comparator<Event>, Serializable {
     private static final long serialVersionUID = 0;
 
     @Override
     public int compare(Event e1, Event e2) {
-      return compareLongs(e1.getEpochNanos(), e2.getEpochNanos());
+      return Long.compare(e1.getEpochNanos(), e2.getEpochNanos());
     }
   }
 
@@ -561,8 +557,8 @@ final class TracezZPageHandler extends ZPageHandler {
     @Override
     public int compare(SpanData s1, SpanData s2) {
       return incremental
-          ? compareLongs(s1.getStartEpochNanos(), s2.getStartEpochNanos())
-          : compareLongs(s2.getStartEpochNanos(), s1.getEndEpochNanos());
+          ? Long.compare(s1.getStartEpochNanos(), s2.getStartEpochNanos())
+          : Long.compare(s2.getStartEpochNanos(), s1.getEndEpochNanos());
     }
   }
 }
