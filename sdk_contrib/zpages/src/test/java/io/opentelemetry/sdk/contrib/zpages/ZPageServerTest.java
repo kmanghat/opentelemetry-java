@@ -16,4 +16,17 @@
 
 package io.opentelemetry.sdk.contrib.zpages;
 
-public final class ZPageHttpServer {}
+import static com.google.common.truth.Truth.assertThat;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
+/** UNit tests for {@link ZPageServer}. */
+@RunWith(JUnit4.class)
+public final class ZPageServerTest {
+  @Test
+  public void implementationExistForTracez() {
+    assertThat(ZPageServer.getTracezZPageHandler()).isInstanceOf(TracezZPageHandler.class);
+  }
+}
